@@ -39,13 +39,14 @@
 			// ChatCPTView
 			// 
 			this.ChatCPTView.AllowExternalDrop = true;
-			this.ChatCPTView.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+			this.ChatCPTView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.ChatCPTView.CreationProperties = null;
 			this.ChatCPTView.DefaultBackgroundColor = System.Drawing.Color.White;
 			this.ChatCPTView.Location = new System.Drawing.Point(1, 1);
 			this.ChatCPTView.Name = "ChatCPTView";
-			this.ChatCPTView.Size = new System.Drawing.Size(1901, 684);
+			this.ChatCPTView.Size = new System.Drawing.Size(1901, 789);
 			this.ChatCPTView.TabIndex = 0;
 			this.ChatCPTView.ZoomFactor = 1D;
 			// 
@@ -53,16 +54,16 @@
 			// 
 			this.TextCreateSpace.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.TextCreateSpace.Location = new System.Drawing.Point(1, 691);
+			this.TextCreateSpace.Location = new System.Drawing.Point(261, 796);
 			this.TextCreateSpace.Name = "TextCreateSpace";
-			this.TextCreateSpace.Size = new System.Drawing.Size(1801, 305);
+			this.TextCreateSpace.Size = new System.Drawing.Size(1541, 200);
 			this.TextCreateSpace.TabIndex = 1;
 			this.TextCreateSpace.Text = "";
 			// 
 			// PreSendButton
 			// 
 			this.PreSendButton.Anchor = System.Windows.Forms.AnchorStyles.Right;
-			this.PreSendButton.Location = new System.Drawing.Point(9, 253);
+			this.PreSendButton.Location = new System.Drawing.Point(3, 0);
 			this.PreSendButton.Name = "PreSendButton";
 			this.PreSendButton.Size = new System.Drawing.Size(75, 45);
 			this.PreSendButton.TabIndex = 2;
@@ -73,9 +74,9 @@
 			// 
 			this.PreSendButtonPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
 			this.PreSendButtonPanel.Controls.Add(this.PreSendButton);
-			this.PreSendButtonPanel.Location = new System.Drawing.Point(1808, 691);
+			this.PreSendButtonPanel.Location = new System.Drawing.Point(1808, 796);
 			this.PreSendButtonPanel.Name = "PreSendButtonPanel";
-			this.PreSendButtonPanel.Size = new System.Drawing.Size(94, 305);
+			this.PreSendButtonPanel.Size = new System.Drawing.Size(94, 200);
 			this.PreSendButtonPanel.TabIndex = 3;
 			// 
 			// ChatGPTBrouther
@@ -87,6 +88,7 @@
 			this.Controls.Add(this.TextCreateSpace);
 			this.Controls.Add(this.ChatCPTView);
 			this.Name = "ChatGPTBrouther";
+			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "ChatGPTBrouther";
 			((System.ComponentModel.ISupportInitialize)(this.ChatCPTView)).EndInit();
 			this.PreSendButtonPanel.ResumeLayout(false);
