@@ -28,80 +28,84 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.ChatCPTView = new Microsoft.Web.WebView2.WinForms.WebView2();
+			this.ChatGPTView = new Microsoft.Web.WebView2.WinForms.WebView2();
 			this.TextCreateSpace = new System.Windows.Forms.RichTextBox();
-			this.PreSendButton = new System.Windows.Forms.Button();
-			this.PreSendButtonPanel = new System.Windows.Forms.Panel();
-			((System.ComponentModel.ISupportInitialize)(this.ChatCPTView)).BeginInit();
-			this.PreSendButtonPanel.SuspendLayout();
+			this.sendButton = new System.Windows.Forms.Button();
+			this.sendButtonPanel = new System.Windows.Forms.Panel();
+			((System.ComponentModel.ISupportInitialize)(this.ChatGPTView)).BeginInit();
+			this.sendButtonPanel.SuspendLayout();
 			this.SuspendLayout();
 			// 
-			// ChatCPTView
+			// ChatGPTView
 			// 
-			this.ChatCPTView.AllowExternalDrop = true;
-			this.ChatCPTView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+			this.ChatGPTView.AllowExternalDrop = true;
+			this.ChatGPTView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.ChatCPTView.CreationProperties = null;
-			this.ChatCPTView.DefaultBackgroundColor = System.Drawing.Color.White;
-			this.ChatCPTView.Location = new System.Drawing.Point(1, 1);
-			this.ChatCPTView.Name = "ChatCPTView";
-			this.ChatCPTView.Size = new System.Drawing.Size(1901, 789);
-			this.ChatCPTView.TabIndex = 0;
-			this.ChatCPTView.ZoomFactor = 1D;
+			this.ChatGPTView.CreationProperties = null;
+			this.ChatGPTView.DefaultBackgroundColor = System.Drawing.Color.White;
+			this.ChatGPTView.Location = new System.Drawing.Point(1, 1);
+			this.ChatGPTView.Name = "ChatGPTView";
+			this.ChatGPTView.Size = new System.Drawing.Size(1261, 484);
+			this.ChatGPTView.TabIndex = 0;
+			this.ChatGPTView.ZoomFactor = 1D;
 			// 
 			// TextCreateSpace
 			// 
 			this.TextCreateSpace.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.TextCreateSpace.Location = new System.Drawing.Point(261, 796);
+			this.TextCreateSpace.Location = new System.Drawing.Point(263, 491);
 			this.TextCreateSpace.Name = "TextCreateSpace";
-			this.TextCreateSpace.Size = new System.Drawing.Size(1541, 200);
+			this.TextCreateSpace.Size = new System.Drawing.Size(902, 185);
 			this.TextCreateSpace.TabIndex = 1;
 			this.TextCreateSpace.Text = "";
+			this.TextCreateSpace.TextChanged += new System.EventHandler(this.TextCreateSpace_TextChanged);
 			// 
-			// PreSendButton
+			// sendButton
 			// 
-			this.PreSendButton.Anchor = System.Windows.Forms.AnchorStyles.Right;
-			this.PreSendButton.Location = new System.Drawing.Point(3, 0);
-			this.PreSendButton.Name = "PreSendButton";
-			this.PreSendButton.Size = new System.Drawing.Size(75, 45);
-			this.PreSendButton.TabIndex = 2;
-			this.PreSendButton.Text = "送信";
-			this.PreSendButton.UseVisualStyleBackColor = true;
+			this.sendButton.Anchor = System.Windows.Forms.AnchorStyles.Right;
+			this.sendButton.Enabled = false;
+			this.sendButton.Location = new System.Drawing.Point(3, 0);
+			this.sendButton.Name = "sendButton";
+			this.sendButton.Size = new System.Drawing.Size(75, 45);
+			this.sendButton.TabIndex = 3;
+			this.sendButton.Text = "送信";
+			this.sendButton.UseVisualStyleBackColor = true;
+			this.sendButton.Click += new System.EventHandler(this.SendButton_Click);
 			// 
-			// PreSendButtonPanel
+			// sendButtonPanel
 			// 
-			this.PreSendButtonPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-			this.PreSendButtonPanel.Controls.Add(this.PreSendButton);
-			this.PreSendButtonPanel.Location = new System.Drawing.Point(1808, 796);
-			this.PreSendButtonPanel.Name = "PreSendButtonPanel";
-			this.PreSendButtonPanel.Size = new System.Drawing.Size(94, 200);
-			this.PreSendButtonPanel.TabIndex = 3;
+			this.sendButtonPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+			this.sendButtonPanel.Controls.Add(this.sendButton);
+			this.sendButtonPanel.Location = new System.Drawing.Point(1168, 491);
+			this.sendButtonPanel.Name = "sendButtonPanel";
+			this.sendButtonPanel.Size = new System.Drawing.Size(94, 185);
+			this.sendButtonPanel.TabIndex = 2;
 			// 
 			// ChatGPTBrouther
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(1904, 1001);
-			this.Controls.Add(this.PreSendButtonPanel);
+			this.ClientSize = new System.Drawing.Size(1264, 681);
+			this.Controls.Add(this.sendButtonPanel);
 			this.Controls.Add(this.TextCreateSpace);
-			this.Controls.Add(this.ChatCPTView);
+			this.Controls.Add(this.ChatGPTView);
+			this.MinimumSize = new System.Drawing.Size(800, 600);
 			this.Name = "ChatGPTBrouther";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "ChatGPTBrouther";
-			((System.ComponentModel.ISupportInitialize)(this.ChatCPTView)).EndInit();
-			this.PreSendButtonPanel.ResumeLayout(false);
+			((System.ComponentModel.ISupportInitialize)(this.ChatGPTView)).EndInit();
+			this.sendButtonPanel.ResumeLayout(false);
 			this.ResumeLayout(false);
 
 		}
 
 		#endregion
 
-		private Microsoft.Web.WebView2.WinForms.WebView2 ChatCPTView;
+		private Microsoft.Web.WebView2.WinForms.WebView2 ChatGPTView;
 		private System.Windows.Forms.RichTextBox TextCreateSpace;
-		private System.Windows.Forms.Button PreSendButton;
-		private System.Windows.Forms.Panel PreSendButtonPanel;
+		private System.Windows.Forms.Button sendButton;
+		private System.Windows.Forms.Panel sendButtonPanel;
 	}
 }
 
