@@ -41,36 +41,35 @@ namespace ChatGPTBrowser
 		/// <param name="e"></param>
 		private async void SendButton_Click(object sender, EventArgs e)
 		{
-			// 入力内容をJavaScript文字列に変換
-			string inputText = JsonSerializer.Serialize(this.TextCreateSpace.Text);
-
-			string script = $@"
-				const el = document.getElementById('prompt-textarea');
-				if (el) {{
+			// ChatGPTViewにフォーカスを移動
+			this.ChatGPTView.Focus();
+			await this.ChatGPTView.ExecuteScriptAsync(@"
+				let el = document.getElementById('prompt-textarea');
+				if (el) {
 					el.focus();
+					let range = document.createRange();
+					range.selectNodeContents(el);
+					let sel = window.getSelection();
+					sel.removeAllRanges();
+					sel.addRange(range);
+				}
+			");
 
-					// テキスト内容の書き換え
-					el.innerText = {inputText};
+			// DOM反映を待つ
+			await Task.Delay(50);
 
-					// Reactに変更を通知
-					el.dispatchEvent(new InputEvent('input', {{
-						bubbles: true,
-						cancelable: true,
-						data: {inputText},
-						inputType: 'insertText'
-					}}));
+			// テキストをクリップボード経由で入力
+			Clipboard.SetText(this.TextCreateSpace.Text);
+			SendKeys.SendWait("^{v}");
 
-					// 念のため compositionend も送ってみる
-					el.dispatchEvent(new CompositionEvent('compositionend', {{
-						data: {inputText},
-						bubbles: true,
-						cancelable: true
-					}}));
-				}}
-			";
+			// テキストをクリア
+			this.TextCreateSpace.Clear();
 
-			await this.ChatGPTView.ExecuteScriptAsync(script);
-			await this.ChatGPTView.ExecuteScriptAsync("document.forms['composer-submit-button'].submit");
+			// DOM反映を待つ
+			await Task.Delay(50);
+
+			// フォーカスをテキスト作成エリアに戻す
+			this.TextCreateSpace.Focus();
 		}
 
 		/// <summary>
