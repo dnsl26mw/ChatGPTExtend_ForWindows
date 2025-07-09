@@ -60,15 +60,21 @@ namespace ChatGPTBrowser
 			// DOM反映を待つ
 			await Task.Delay(100);
 
-			// テキストをクリップボード経由で入力
+			// テキストをChatGPTにクリップボード経由で入力
 			Clipboard.SetText(this.textCreateSpace.Text);
 			SendKeys.SendWait("^{v}");
 
-			// テキストをクリア
-			this.textCreateSpace.Clear();
+			// DOM反映を待つ
+			await Task.Delay(100);
+
+			// 送信
+			SendKeys.SendWait("{ENTER}");
 
 			// DOM反映を待つ
 			await Task.Delay(100);
+
+			// テキストをクリア
+			this.textCreateSpace.Clear();
 
 			// フォーカスをテキスト作成エリアに戻す
 			this.textCreateSpace.Focus();
@@ -87,7 +93,21 @@ namespace ChatGPTBrowser
 			}
 			else
 			{
-				this.sendButton.Enabled= false;
+				this.sendButton.Enabled = false;
+			}
+		}
+
+		/// <summary>
+		/// テキスト作成エリアKeyDownイベント
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void TextCreateSpace_KeyDown(object sender, KeyEventArgs e)
+		{
+			// 送信ボタンクリックイベントの呼び出し
+			if (e.Control && e.KeyCode == Keys.Enter)
+			{
+				SendButton_Click(sender, e);
 			}
 		}
 		#endregion

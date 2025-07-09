@@ -75,6 +75,7 @@
 			// 
 			this.textCreateSpace.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+			this.textCreateSpace.BorderStyle = System.Windows.Forms.BorderStyle.None;
 			this.textCreateSpace.Font = new System.Drawing.Font("MS UI Gothic", 12F);
 			this.textCreateSpace.Location = new System.Drawing.Point(263, 491);
 			this.textCreateSpace.Multiline = true;
@@ -83,6 +84,7 @@
 			this.textCreateSpace.Size = new System.Drawing.Size(902, 185);
 			this.textCreateSpace.TabIndex = 1;
 			this.textCreateSpace.TextChanged += new System.EventHandler(this.TextCreateSpace_TextChanged);
+			this.textCreateSpace.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextCreateSpace_KeyDown);
 			// 
 			// ChatGPTBrouther
 			// 
