@@ -27,9 +27,17 @@ namespace ChatGPTBrowser
 		/// </summary>
 		private async void InitializeAsync()
 		{
-			await ChatGPTView.EnsureCoreWebView2Async();
-			ChatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
+			await chatGPTView.EnsureCoreWebView2Async();
+			chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
 			this.textCreateSpace.Focus();
+		}
+
+		/// <summary>
+		/// 非同期処理でAwaitを行う
+		/// </summary>
+		private async void Await(int value)
+		{
+			 await Task.Delay(value);
 		}
 		#endregion
 
@@ -42,10 +50,10 @@ namespace ChatGPTBrowser
 		private async void SendButton_Click(object sender, EventArgs e)
 		{
 			// ChatGPTViewにフォーカスを移動
-			this.ChatGPTView.Focus();
+			this.chatGPTView.Focus();
 
 			// ChatGPTのテキストボックスにフォーカスを移動
-			await this.ChatGPTView.ExecuteScriptAsync(@"
+			await this.chatGPTView.ExecuteScriptAsync(@"
 				let el = document.getElementById('prompt-textarea');
 				if (el) {
 					el.focus();
@@ -56,22 +64,16 @@ namespace ChatGPTBrowser
 					sel.addRange(range);
 				}
 			");
-
-			// DOM反映を待つ
-			await Task.Delay(100);
+			this.Await(100);
 
 			// テキストをChatGPTにクリップボード経由で入力
 			Clipboard.SetText(this.textCreateSpace.Text);
 			SendKeys.SendWait("^{v}");
-
-			// DOM反映を待つ
-			await Task.Delay(100);
+			this.Await(100);
 
 			// 送信
 			SendKeys.SendWait("{ENTER}");
-
-			// DOM反映を待つ
-			await Task.Delay(100);
+			this.Await(100);
 
 			// テキストをクリア
 			this.textCreateSpace.Clear();
