@@ -55,6 +55,7 @@
 			// 
 			this.sendButton.Anchor = System.Windows.Forms.AnchorStyles.Right;
 			this.sendButton.Enabled = false;
+			this.sendButton.Font = new System.Drawing.Font("MS UI Gothic", 11F);
 			this.sendButton.Location = new System.Drawing.Point(3, 0);
 			this.sendButton.Name = "sendButton";
 			this.sendButton.Size = new System.Drawing.Size(75, 45);

@@ -31,6 +31,14 @@ namespace ChatGPTBrowser
 			chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
 			this.textCreateSpace.Focus();
 		}
+
+		/// <summary>
+		/// 非同期処理でAwaitを行う
+		/// </summary>
+		private async void Await(int value)
+		{
+			 await Task.Delay(value);
+		}
 		#endregion
 
 		#region イベント
@@ -56,22 +64,16 @@ namespace ChatGPTBrowser
 					sel.addRange(range);
 				}
 			");
-
-			// DOM反映を待つ
-			await Task.Delay(100);
+			this.Await(100);
 
 			// テキストをChatGPTにクリップボード経由で入力
 			Clipboard.SetText(this.textCreateSpace.Text);
 			SendKeys.SendWait("^{v}");
-
-			// DOM反映を待つ
-			await Task.Delay(100);
+			this.Await(100);
 
 			// 送信
 			SendKeys.SendWait("{ENTER}");
-
-			// DOM反映を待つ
-			await Task.Delay(100);
+			this.Await(100);
 
 			// テキストをクリア
 			this.textCreateSpace.Clear();
