@@ -28,6 +28,7 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChatGPTBrouther));
 			this.ChatGPTView = new Microsoft.Web.WebView2.WinForms.WebView2();
 			this.sendButton = new System.Windows.Forms.Button();
 			this.sendButtonPanel = new System.Windows.Forms.Panel();
@@ -94,6 +95,7 @@
 			this.Controls.Add(this.textCreateSpace);
 			this.Controls.Add(this.sendButtonPanel);
 			this.Controls.Add(this.ChatGPTView);
+			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.MinimumSize = new System.Drawing.Size(800, 600);
 			this.Name = "ChatGPTBrouther";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
