@@ -29,27 +29,27 @@
 		private void InitializeComponent()
 		{
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChatGPTBrouther));
-			this.ChatGPTView = new Microsoft.Web.WebView2.WinForms.WebView2();
+			this.chatGPTView = new Microsoft.Web.WebView2.WinForms.WebView2();
 			this.sendButton = new System.Windows.Forms.Button();
 			this.sendButtonPanel = new System.Windows.Forms.Panel();
 			this.textCreateSpace = new System.Windows.Forms.TextBox();
-			((System.ComponentModel.ISupportInitialize)(this.ChatGPTView)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.chatGPTView)).BeginInit();
 			this.sendButtonPanel.SuspendLayout();
 			this.SuspendLayout();
 			// 
-			// ChatGPTView
+			// chatGPTView
 			// 
-			this.ChatGPTView.AllowExternalDrop = true;
-			this.ChatGPTView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+			this.chatGPTView.AllowExternalDrop = true;
+			this.chatGPTView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.ChatGPTView.CreationProperties = null;
-			this.ChatGPTView.DefaultBackgroundColor = System.Drawing.Color.White;
-			this.ChatGPTView.Location = new System.Drawing.Point(1, 1);
-			this.ChatGPTView.Name = "ChatGPTView";
-			this.ChatGPTView.Size = new System.Drawing.Size(1261, 484);
-			this.ChatGPTView.TabIndex = 0;
-			this.ChatGPTView.ZoomFactor = 1D;
+			this.chatGPTView.CreationProperties = null;
+			this.chatGPTView.DefaultBackgroundColor = System.Drawing.Color.White;
+			this.chatGPTView.Location = new System.Drawing.Point(1, 1);
+			this.chatGPTView.Name = "chatGPTView";
+			this.chatGPTView.Size = new System.Drawing.Size(1261, 484);
+			this.chatGPTView.TabIndex = 0;
+			this.chatGPTView.ZoomFactor = 1D;
 			// 
 			// sendButton
 			// 
@@ -60,6 +60,7 @@
 			this.sendButton.Size = new System.Drawing.Size(75, 45);
 			this.sendButton.TabIndex = 3;
 			this.sendButton.Text = "送信";
+			this.sendButton.Font = new System.Drawing.Font("MS UI Gothic", 11F);
 			this.sendButton.UseVisualStyleBackColor = true;
 			this.sendButton.Click += new System.EventHandler(this.SendButton_Click);
 			// 
@@ -94,13 +95,13 @@
 			this.ClientSize = new System.Drawing.Size(1264, 681);
 			this.Controls.Add(this.textCreateSpace);
 			this.Controls.Add(this.sendButtonPanel);
-			this.Controls.Add(this.ChatGPTView);
+			this.Controls.Add(this.chatGPTView);
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.MinimumSize = new System.Drawing.Size(800, 600);
 			this.Name = "ChatGPTBrouther";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "ChatGPTBrouther";
-			((System.ComponentModel.ISupportInitialize)(this.ChatGPTView)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.chatGPTView)).EndInit();
 			this.sendButtonPanel.ResumeLayout(false);
 			this.ResumeLayout(false);
 			this.PerformLayout();
@@ -109,7 +110,7 @@
 
 		#endregion
 
-		private Microsoft.Web.WebView2.WinForms.WebView2 ChatGPTView;
+		private Microsoft.Web.WebView2.WinForms.WebView2 chatGPTView;
 		private System.Windows.Forms.Button sendButton;
 		private System.Windows.Forms.Panel sendButtonPanel;
 		private System.Windows.Forms.TextBox textCreateSpace;

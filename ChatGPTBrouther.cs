@@ -27,8 +27,8 @@ namespace ChatGPTBrowser
 		/// </summary>
 		private async void InitializeAsync()
 		{
-			await ChatGPTView.EnsureCoreWebView2Async();
-			ChatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
+			await chatGPTView.EnsureCoreWebView2Async();
+			chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
 			this.textCreateSpace.Focus();
 		}
 		#endregion
@@ -42,10 +42,10 @@ namespace ChatGPTBrowser
 		private async void SendButton_Click(object sender, EventArgs e)
 		{
 			// ChatGPTViewにフォーカスを移動
-			this.ChatGPTView.Focus();
+			this.chatGPTView.Focus();
 
 			// ChatGPTのテキストボックスにフォーカスを移動
-			await this.ChatGPTView.ExecuteScriptAsync(@"
+			await this.chatGPTView.ExecuteScriptAsync(@"
 				let el = document.getElementById('prompt-textarea');
 				if (el) {
 					el.focus();
