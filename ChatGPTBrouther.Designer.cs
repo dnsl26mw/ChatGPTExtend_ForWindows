@@ -29,9 +29,9 @@
 		private void InitializeComponent()
 		{
 			this.ChatGPTView = new Microsoft.Web.WebView2.WinForms.WebView2();
-			this.TextCreateSpace = new System.Windows.Forms.RichTextBox();
 			this.sendButton = new System.Windows.Forms.Button();
 			this.sendButtonPanel = new System.Windows.Forms.Panel();
+			this.textCreateSpace = new System.Windows.Forms.TextBox();
 			((System.ComponentModel.ISupportInitialize)(this.ChatGPTView)).BeginInit();
 			this.sendButtonPanel.SuspendLayout();
 			this.SuspendLayout();
@@ -49,17 +49,6 @@
 			this.ChatGPTView.Size = new System.Drawing.Size(1261, 484);
 			this.ChatGPTView.TabIndex = 0;
 			this.ChatGPTView.ZoomFactor = 1D;
-			// 
-			// TextCreateSpace
-			// 
-			this.TextCreateSpace.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-			this.TextCreateSpace.Location = new System.Drawing.Point(263, 491);
-			this.TextCreateSpace.Name = "TextCreateSpace";
-			this.TextCreateSpace.Size = new System.Drawing.Size(902, 185);
-			this.TextCreateSpace.TabIndex = 1;
-			this.TextCreateSpace.Text = "";
-			this.TextCreateSpace.TextChanged += new System.EventHandler(this.TextCreateSpace_TextChanged);
 			// 
 			// sendButton
 			// 
@@ -82,13 +71,26 @@
 			this.sendButtonPanel.Size = new System.Drawing.Size(94, 185);
 			this.sendButtonPanel.TabIndex = 2;
 			// 
+			// textCreateSpace
+			// 
+			this.textCreateSpace.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.textCreateSpace.Font = new System.Drawing.Font("MS UI Gothic", 12F);
+			this.textCreateSpace.Location = new System.Drawing.Point(263, 491);
+			this.textCreateSpace.Multiline = true;
+			this.textCreateSpace.Name = "textCreateSpace";
+			this.textCreateSpace.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+			this.textCreateSpace.Size = new System.Drawing.Size(902, 185);
+			this.textCreateSpace.TabIndex = 1;
+			this.textCreateSpace.TextChanged += new System.EventHandler(this.TextCreateSpace_TextChanged);
+			// 
 			// ChatGPTBrouther
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1264, 681);
+			this.Controls.Add(this.textCreateSpace);
 			this.Controls.Add(this.sendButtonPanel);
-			this.Controls.Add(this.TextCreateSpace);
 			this.Controls.Add(this.ChatGPTView);
 			this.MinimumSize = new System.Drawing.Size(800, 600);
 			this.Name = "ChatGPTBrouther";
@@ -97,15 +99,16 @@
 			((System.ComponentModel.ISupportInitialize)(this.ChatGPTView)).EndInit();
 			this.sendButtonPanel.ResumeLayout(false);
 			this.ResumeLayout(false);
+			this.PerformLayout();
 
 		}
 
 		#endregion
 
 		private Microsoft.Web.WebView2.WinForms.WebView2 ChatGPTView;
-		private System.Windows.Forms.RichTextBox TextCreateSpace;
 		private System.Windows.Forms.Button sendButton;
 		private System.Windows.Forms.Panel sendButtonPanel;
+		private System.Windows.Forms.TextBox textCreateSpace;
 	}
 }
 

@@ -29,7 +29,7 @@ namespace ChatGPTBrowser
 		{
 			await ChatGPTView.EnsureCoreWebView2Async();
 			ChatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
-			this.TextCreateSpace.Focus();
+			this.textCreateSpace.Focus();
 		}
 		#endregion
 
@@ -43,6 +43,8 @@ namespace ChatGPTBrowser
 		{
 			// ChatGPTViewにフォーカスを移動
 			this.ChatGPTView.Focus();
+
+			// ChatGPTのテキストボックスにフォーカスを移動
 			await this.ChatGPTView.ExecuteScriptAsync(@"
 				let el = document.getElementById('prompt-textarea');
 				if (el) {
@@ -56,20 +58,20 @@ namespace ChatGPTBrowser
 			");
 
 			// DOM反映を待つ
-			await Task.Delay(50);
+			await Task.Delay(100);
 
 			// テキストをクリップボード経由で入力
-			Clipboard.SetText(this.TextCreateSpace.Text);
+			Clipboard.SetText(this.textCreateSpace.Text);
 			SendKeys.SendWait("^{v}");
 
 			// テキストをクリア
-			this.TextCreateSpace.Clear();
+			this.textCreateSpace.Clear();
 
 			// DOM反映を待つ
-			await Task.Delay(50);
+			await Task.Delay(100);
 
 			// フォーカスをテキスト作成エリアに戻す
-			this.TextCreateSpace.Focus();
+			this.textCreateSpace.Focus();
 		}
 
 		/// <summary>
@@ -79,7 +81,7 @@ namespace ChatGPTBrowser
 		/// <param name="e"></param>
 		private void TextCreateSpace_TextChanged(object sender, EventArgs e)
 		{
-			if (!string.IsNullOrEmpty(this.TextCreateSpace.Text))
+			if (!string.IsNullOrEmpty(this.textCreateSpace.Text.Trim()))
 			{
 				this.sendButton.Enabled = true;
 			}
