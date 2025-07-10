@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using System.Windows.Forms;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace ChatGPTBrowser
 {
@@ -31,14 +32,6 @@ namespace ChatGPTBrowser
 			chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
 			this.textCreateSpace.Focus();
 		}
-
-		/// <summary>
-		/// 非同期処理でAwaitを行う
-		/// </summary>
-		private async void Await(int value)
-		{
-			 await Task.Delay(value);
-		}
 		#endregion
 
 		#region イベント
@@ -49,6 +42,12 @@ namespace ChatGPTBrowser
 		/// <param name="e"></param>
 		private async void SendButton_Click(object sender, EventArgs e)
 		{
+			// 仮想DOM反映待ち時間
+			int waitTime = 100;
+
+			// クリップボードの内容を退避
+			IDataObject cripBoardData = Clipboard.GetDataObject();
+
 			// ChatGPTViewにフォーカスを移動
 			this.chatGPTView.Focus();
 
@@ -64,22 +63,34 @@ namespace ChatGPTBrowser
 					sel.addRange(range);
 				}
 			");
-			this.Await(100);
+			await Task.Delay(waitTime);
 
 			// テキストをChatGPTにクリップボード経由で入力
 			Clipboard.SetText(this.textCreateSpace.Text);
 			SendKeys.SendWait("^{v}");
-			this.Await(100);
+			await Task.Delay(waitTime);
 
 			// 送信
 			SendKeys.SendWait("{ENTER}");
-			this.Await(100);
+			await Task.Delay(waitTime);
 
 			// テキストをクリア
 			this.textCreateSpace.Clear();
 
 			// フォーカスをテキスト作成エリアに戻す
 			this.textCreateSpace.Focus();
+
+			// クリップボードの内容を戻す
+			Thread SetData = new Thread(() =>
+			{
+				if(cripBoardData != null)
+				{
+					Clipboard.SetDataObject(cripBoardData, true);
+				}
+				
+			});
+			SetData.SetApartmentState(ApartmentState.STA);
+			SetData.Start();
 		}
 
 		/// <summary>
