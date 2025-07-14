@@ -11,6 +11,7 @@ using System.Text.Json;
 using System.Windows.Forms;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Runtime.InteropServices;
 
 namespace ChatGPTBrowser
 {
@@ -24,13 +25,97 @@ namespace ChatGPTBrowser
 
 		#region メソッド
 		/// <summary>
-		/// WebView2コントロール呼び出し
+		/// WebView2コントロール初期化
 		/// </summary>
 		private async void InitializeAsync()
 		{
-			await chatGPTView.EnsureCoreWebView2Async();
+			// ChatGPTを読み込み
+			await this.chatGPTView.EnsureCoreWebView2Async();
 			chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
+
+			// テキストボックスにフォーカスを移動
 			this.textCreateSpace.Focus();
+		}
+
+		/// <summary>
+		/// クリップボードのデータを退避
+		/// </summary>
+		private IDataObject BackUpClipBoard()
+		{
+			IDataObject backupData = null;
+			Thread thread;
+
+			thread = new Thread(() =>
+			{
+				try
+				{
+					// クリップボードのデータを取得
+					var original = Clipboard.GetDataObject();
+
+					if (original == null)
+					{
+						return;
+					}
+
+					var copy = new DataObject();
+
+					foreach (var format in original.GetFormats())
+					{
+						copy.SetData(format, original.GetData(format));
+					}
+
+					backupData = copy;
+				}
+				catch
+				{
+					return;
+				}
+			});
+
+			thread.SetApartmentState(ApartmentState.STA);
+			thread.Start();
+			thread.Join();
+
+			return backupData;
+		}
+
+		/// <summary>
+		/// クリップボードのデータを復元
+		/// </summary>
+		/// <param name="backupData">退避データ</param>
+		private void RestoreClipboard(IDataObject backupData)
+		{
+			Thread thread = new Thread(() =>
+			{
+				// 退避データが存在しない場合
+				if (backupData == null)
+				{
+					return;
+				}
+
+				try
+				{
+					// 退避データのフォーマットを取得
+					var formats = backupData.GetFormats();
+
+					// 有効なフォーマットが存在しない場合
+					if (formats == null || formats.Length == 0)
+					{
+						return;
+					}
+
+					// クリップボードの内容を復元
+					Clipboard.SetDataObject(backupData, true);
+				}
+				catch
+				{
+					return;
+				}
+			});
+
+			thread.SetApartmentState(ApartmentState.STA);
+			thread.Start();
+			thread.Join();
 		}
 		#endregion
 
@@ -42,26 +127,35 @@ namespace ChatGPTBrowser
 		/// <param name="e"></param>
 		private async void SendButton_Click(object sender, EventArgs e)
 		{
-			// 仮想DOM反映待ち時間
-			int waitTime = 100;
+			int waitTime = 150;
 
 			// クリップボードの内容を退避
-			IDataObject cripBoardData = Clipboard.GetDataObject();
+			IDataObject backupData = this.BackUpClipBoard();
+			await Task.Delay(300);
 
 			// ChatGPTViewにフォーカスを移動
 			this.chatGPTView.Focus();
 
 			// ChatGPTのテキストボックスにフォーカスを移動
 			await this.chatGPTView.ExecuteScriptAsync(@"
-				let el = document.getElementById('prompt-textarea');
-				if (el) {
-					el.focus();
-					let range = document.createRange();
-					range.selectNodeContents(el);
-					let sel = window.getSelection();
-					sel.removeAllRanges();
-					sel.addRange(range);
+				(async () => {
+					function waitForPromptTextAreaEnabled() {
+						return new Promise((resolve) => {
+						const interval = setInterval(() => {
+							const promptTextArea = document.querySelector('textarea[data-testid=""prompt-textarea""]');
+							if (promptTextArea && !promptTextArea.disabled) {
+								clearInterval(interval);
+								resolve(promptTextArea);
+							}
+						}, 100);
+					});
 				}
+
+				const promptTextArea = await waitForPromptTextAreaEnabled();
+				promptTextArea.focus();
+				promptTextArea.select();
+				promptTextArea.setSelectionRange(promptTextArea.value.length, promptTextArea.value.length);
+			})();
 			");
 			await Task.Delay(waitTime);
 
@@ -74,27 +168,18 @@ namespace ChatGPTBrowser
 			SendKeys.SendWait("{ENTER}");
 			await Task.Delay(waitTime);
 
+			// クリップボードの内容を復元
+			this.RestoreClipboard(backupData);
+
 			// テキストをクリア
 			this.textCreateSpace.Clear();
 
-			// フォーカスをテキスト作成エリアに戻す
+			// テキストボックスにフォーカスを移動
 			this.textCreateSpace.Focus();
-
-			// クリップボードの内容を戻す
-			Thread SetData = new Thread(() =>
-			{
-				if(cripBoardData != null)
-				{
-					Clipboard.SetDataObject(cripBoardData, true);
-				}
-				
-			});
-			SetData.SetApartmentState(ApartmentState.STA);
-			SetData.Start();
 		}
 
 		/// <summary>
-		/// 入力テキスト変更イベント
+		/// テキストボックスのテキスト変更イベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
@@ -111,7 +196,7 @@ namespace ChatGPTBrowser
 		}
 
 		/// <summary>
-		/// テキスト作成エリアKeyDownイベント
+		/// テキストボックスKeyDownイベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>

@@ -61,7 +61,6 @@
 			this.sendButton.Size = new System.Drawing.Size(75, 45);
 			this.sendButton.TabIndex = 3;
 			this.sendButton.Text = "送信";
-			this.sendButton.Font = new System.Drawing.Font("MS UI Gothic", 11F);
 			this.sendButton.UseVisualStyleBackColor = true;
 			this.sendButton.Click += new System.EventHandler(this.SendButton_Click);
 			// 
@@ -98,6 +97,7 @@
 			this.Controls.Add(this.sendButtonPanel);
 			this.Controls.Add(this.chatGPTView);
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+			this.KeyPreview = true;
 			this.MinimumSize = new System.Drawing.Size(800, 600);
 			this.Name = "ChatGPTBrouther";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
