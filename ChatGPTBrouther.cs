@@ -17,6 +17,9 @@ namespace ChatGPTBrowser
 {
 	public partial class ChatGPTBrouther : Form
 	{
+		// 送信失敗時の復元用のテキスト退避変数
+		private string backupText = string.Empty;
+
 		public ChatGPTBrouther()
 		{
 			InitializeComponent();
@@ -127,41 +130,35 @@ namespace ChatGPTBrowser
 		/// <param name="e"></param>
 		private async void SendButton_Click(object sender, EventArgs e)
 		{
-			int waitTime = 150;
+			// DOM変更待ち時間
+			int waitTime = 200;
 
 			// クリップボードの内容を退避
 			IDataObject backupData = this.BackUpClipBoard();
-			await Task.Delay(300);
+			await Task.Delay(waitTime);
 
 			// ChatGPTViewにフォーカスを移動
 			this.chatGPTView.Focus();
 
 			// ChatGPTのテキストボックスにフォーカスを移動
 			await this.chatGPTView.ExecuteScriptAsync(@"
-				(async () => {
-					function waitForPromptTextAreaEnabled() {
-						return new Promise((resolve) => {
-						const interval = setInterval(() => {
-							const promptTextArea = document.querySelector('textarea[data-testid=""prompt-textarea""]');
-							if (promptTextArea && !promptTextArea.disabled) {
-								clearInterval(interval);
-								resolve(promptTextArea);
-							}
-						}, 100);
-					});
+				const promptTextArea = document.querySelector('textarea[data-testid=""prompt-textarea""
+				if (promptTextArea) {
+					promptTextArea.dispatchEvent(new MouseEvent(new MouseEvent('mousedown', {bubbles: true}));
+					promptTextArea.dispatchEvent(new MouseEvent(new MouseEvent('mouseup', {bubbles: true}));
+					promptTextArea.dispatchEvent(new MouseEvent(new MouseEvent('click', {bubbles: true}));
+					promptTextArea.focus();
+					promptTextArea.select();
 				}
-
-				const promptTextArea = await waitForPromptTextAreaEnabled();
-				promptTextArea.focus();
-				promptTextArea.select();
-				promptTextArea.setSelectionRange(promptTextArea.value.length, promptTextArea.value.length);
-			})();
 			");
 			await Task.Delay(waitTime);
 
+			// 送信失敗時に復元できるよう入力したテキストを退避
+			this.backupText = this.textCreateSpace.Text.Trim();
+
 			// テキストをChatGPTにクリップボード経由で入力
-			Clipboard.SetText(this.textCreateSpace.Text);
-			SendKeys.SendWait("^{v}");
+			Clipboard.SetText(this.backupText);
+			SendKeys.SendWait(" ^{v}");
 			await Task.Delay(waitTime);
 
 			// 送信
@@ -206,6 +203,16 @@ namespace ChatGPTBrowser
 			if (e.Control && e.KeyCode == Keys.Enter)
 			{
 				SendButton_Click(sender, e);
+			}
+
+			// 前回送信のテキストを復元
+			if (e.Control && e.KeyCode == Keys.B)
+			{
+				if (string.IsNullOrEmpty(this.backupText))
+				{
+					this.textCreateSpace.Text = this.backupText;
+					this.textCreateSpace.Select(this.textCreateSpace.Text.Length, 0);
+				}
 			}
 		}
 		#endregion
