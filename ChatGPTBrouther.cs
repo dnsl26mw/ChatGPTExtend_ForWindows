@@ -12,6 +12,7 @@ using System.Windows.Forms;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Runtime.InteropServices;
+using System.Windows.Forms.VisualStyles;
 
 namespace ChatGPTBrowser
 {
@@ -34,7 +35,7 @@ namespace ChatGPTBrowser
 		{
 			// ChatGPTを読み込み
 			await this.chatGPTView.EnsureCoreWebView2Async();
-			chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
+			this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
 
 			// テキストボックスにフォーカスを移動
 			this.textCreateSpace.Focus();
