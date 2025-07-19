@@ -131,7 +131,7 @@ namespace ChatGPTBrowser
 		private async void SendButton_Click(object sender, EventArgs e)
 		{
 			// DOM変更待ち時間
-			int waitTime = 200;
+			int waitTime = 100;
 
 			// クリップボードの内容を退避
 			IDataObject backupData = this.BackUpClipBoard();
@@ -206,9 +206,9 @@ namespace ChatGPTBrowser
 			}
 
 			// 前回送信のテキストを復元
-			if (e.Control && e.KeyCode == Keys.B)
+			if (e.Control && e.Alt && e.KeyCode == Keys.B)
 			{
-				if (string.IsNullOrEmpty(this.backupText))
+				if (!string.IsNullOrEmpty(this.backupText))
 				{
 					this.textCreateSpace.Text = this.backupText;
 					this.textCreateSpace.Select(this.textCreateSpace.Text.Length, 0);
