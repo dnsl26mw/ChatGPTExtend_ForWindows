@@ -13,6 +13,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Runtime.InteropServices;
 using System.Windows.Forms.VisualStyles;
+using Microsoft.Web.WebView2.Core;
 
 namespace ChatGPTBrowser
 {
@@ -49,7 +50,7 @@ namespace ChatGPTBrowser
 			IDataObject backupData = null;
 			Thread thread;
 
-			thread = new Thread(() =>
+			thread = new Thread((MethodInvoker) =>
 			{
 				try
 				{
@@ -158,6 +159,7 @@ namespace ChatGPTBrowser
 			this.backupText = this.textCreateSpace.Text.Trim();
 
 			// テキストをChatGPTにクリップボード経由で入力
+			Clipboard.Clear();
 			Clipboard.SetText(this.backupText);
 			SendKeys.SendWait(" ^{v}");
 			await Task.Delay(waitTime);
