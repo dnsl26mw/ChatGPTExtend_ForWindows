@@ -144,23 +144,34 @@ namespace ChatGPTBrowser
 
 			// ChatGPTのテキストボックスにフォーカスを移動
 			await this.chatGPTView.ExecuteScriptAsync(@"
-				const promptTextArea = document.querySelector('textarea[data-testid=""prompt-textarea""
-				if (promptTextArea) {
-					promptTextArea.dispatchEvent(new MouseEvent(new MouseEvent('mousedown', {bubbles: true}));
-					promptTextArea.dispatchEvent(new MouseEvent(new MouseEvent('mouseup', {bubbles: true}));
-					promptTextArea.dispatchEvent(new MouseEvent(new MouseEvent('click', {bubbles: true}));
-					promptTextArea.focus();
-					promptTextArea.select();
-				}
+				(function() {
+					const promptTextArea = document.querySelector('textarea[data-testid=""prompt-textarea""]');
+					if (promptTextArea) {
+						const mousedown = new MouseEvent('mousedown', { bubbles: true });
+						const mouseup = new MouseEvent('mouseup', { bubbles: true });
+						const click = new MouseEvent('click', { bubbles: true });
+
+						promptTextArea.dispatchEvent(mousedown);
+						promptTextArea.dispatchEvent(mouseup);
+						promptTextArea.dispatchEvent(click);
+
+						promptTextArea.focus();
+						promptTextArea.select();
+					}
+				})();
 			");
 			await Task.Delay(waitTime);
 
 			// 送信失敗時に復元できるよう入力したテキストを退避
-			this.backupText = this.textCreateSpace.Text.Trim();
+			this.backupText = string.Empty;
+			string sendText = this.textCreateSpace.Text.Trim();
+			sendText = sendText.TrimStart();
+			sendText = sendText.Trim().TrimStart('　');
+			this.backupText = sendText;
 
 			// テキストをChatGPTにクリップボード経由で入力
 			Clipboard.Clear();
-			Clipboard.SetText(this.backupText);
+			Clipboard.SetText(sendText);
 			SendKeys.SendWait(" ^{v}");
 			await Task.Delay(waitTime);
 
@@ -202,6 +213,12 @@ namespace ChatGPTBrowser
 		/// <param name="e"></param>
 		private void TextCreateSpace_KeyDown(object sender, KeyEventArgs e)
 		{
+			// Control押下
+			if (e.Control)
+			{
+				this.textCreateSpace.Select(this.textCreateSpace.Text.Length, 0);
+			}
+
 			// 送信ボタンクリックイベントの呼び出し
 			if (e.Control && e.KeyCode == Keys.Enter)
 			{
