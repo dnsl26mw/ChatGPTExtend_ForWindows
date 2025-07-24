@@ -16,7 +16,7 @@ namespace ChatGPTBrowser
 		{
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			Application.Run(new ChatGPTBrouther());
+			Application.Run(new ChatGPTBrowser());
 		}
 	}
 }
