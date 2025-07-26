@@ -103,12 +103,10 @@
 			this.KeyPreview = true;
 			this.MinimumSize = new System.Drawing.Size(800, 600);
 			this.Name = "ChatGPTBrowser";
-			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+			this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
 			this.Text = "ChatGPTBrowser";
 			this.Deactivate += new System.EventHandler(this.ChatGPTBrowser_Deactive);
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ChatGPTBrowser_FormClosing);
-			this.LocationChanged += new System.EventHandler(this.ChatGPTBrowser_LocationChanged);
-			this.SizeChanged += new System.EventHandler(this.ChatGPTBrowser_SizeChanged);
 			((System.ComponentModel.ISupportInitialize)(this.chatGPTView)).EndInit();
 			this.sendButtonPanel.ResumeLayout(false);
 			this.ResumeLayout(false);

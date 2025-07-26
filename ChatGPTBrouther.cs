@@ -25,17 +25,23 @@ namespace ChatGPTBrowser
 		// 表示位置と表示サイズを保持するJSONファイル名
 		private string locationAndSizeJsonName = "./locationandsize.json";
 
-		// 表示位置
-		private Point location = new Point();
-
-		// 表示サイズ
-		private Size size = new Size();
-
 		// JSONでの表示位置保持用のキー
-		string locationKey = "location";
+		string locationKey = "Location";
 
 		// JSONでの表示サイズ保持用のキー
-		string sizeKey = "size";
+		string sizeKey = "Size";
+
+		// JSONでの表示位置X座標保持用のキー
+		string XKey = "X";
+
+		// JSONでの表示位置Y座標保持用のキー
+		string YKey = "Y";
+
+		// JSONでの表示サイズWidth保持用のキー
+		string WidthKey = "Width";
+
+		// JSONでの表示サイズWidth保持用のキー
+		string HeightKey = "Height";
 
 		// 送信失敗時の復元用のテキスト退避変数
 		private string backupText = string.Empty;
@@ -43,6 +49,10 @@ namespace ChatGPTBrowser
 		public ChatGPTBrowser()
 		{
 			InitializeComponent();
+
+			// 表示位置と表示サイズを設定
+			this.SetLocationAndSize();
+
 			InitializeAsync();
 		}
 
@@ -52,9 +62,6 @@ namespace ChatGPTBrowser
 		/// </summary>
 		private async void InitializeAsync()
 		{
-			// 表示位置と表示サイズを設定
-			this.SetLocationAndSize();
-
 			// ChatGPTを読み込み
 			await this.chatGPTView.EnsureCoreWebView2Async();
 			this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
@@ -70,52 +77,108 @@ namespace ChatGPTBrowser
 		{
 			try
 			{
-
 				// 前回の表示位置と表示サイズを復元
 				if (File.Exists(@locationAndSizeJsonName))
 				{
-					// JSON読み込み
-					string jsonStr = File.ReadAllText(locationAndSizeJsonName);
-					var json = JsonSerializer.Deserialize<string>(jsonStr);
+					// JSONの内容を取得
+					string json = File.ReadAllText(@locationAndSizeJsonName);
+					var data = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
+
+					// 表示位置および表示サイズを読み込み
+					var locationDict = JsonSerializer.Deserialize<Dictionary<string, int>>(data[this.locationKey].GetRawText());
+					var sizeDict = JsonSerializer.Deserialize<Dictionary<string, int>>(data[this.sizeKey].GetRawText());
 
 					// 前回の表示位置
-					Point lastTimeLocation = new Point();
+					Point lastTimeLocation = new Point(locationDict[this.XKey], locationDict[this.YKey]);
 
 					// 前回の表示サイズ
-					Size lastTimeSize = new Size();
+					Size lastTimeSize = new Size(sizeDict[this.WidthKey], sizeDict[this.HeightKey]);
 
-					// 表示サイズの設定
-					if (lastTimeSize.Width > this.Width)
-					{
-						this.Width = lastTimeSize.Width;
-					}
-					if (lastTimeSize.Height > this.Height)
-					{
-						this.Height = lastTimeSize.Height;
-					}
-
-					// 表示位置を設定
-					this.Location = lastTimeLocation;
+					// 前回の表示位置および表示サイズを設定
+					this.SetLocationAndSize(lastTimeLocation, lastTimeSize);
 				}
 				else
 				{
-					// 表示位置と表示サイズ保持用のJSONファイル作成
-					File.Create(@locationAndSizeJsonName);
+					// デフォルト表示位置およびデフォルト表示サイズを設定
+					this.SetLocationAndSize(null, null);
 				}
 			}
 			catch
 			{
-				// 表示位置と表示サイズ保持用のJSONファイル作成
+				// デフォルト表示位置およびデフォルト表示サイズを設定
+				this.SetLocationAndSize(null, null);
 			}
 		}
 
 		/// <summary>
-		/// JSONファイルの作成と記録を行う
+		/// 表示位置と表示サイズを設定
 		/// </summary>
-		/// <param name="key"></param>
-		/// <param name="value"></param>
-		private void RecordForJson(string key, string value)
+		/// <param name="location"></param>
+		/// <param name="size"></param>
+		private void SetLocationAndSize(Point? location = null, Size? size = null)
 		{
+			// 表示位置設定
+			if (location == null)
+			{
+				this.CenterToScreen();
+			}
+			else
+			{
+				this.Location = (Point)location;
+			}
+
+			// 表示サイズ設定
+			if (size == null || size.Value.Width < 800 || size.Value.Height < 600)
+			{
+				this.Size = new Size(1200, 720);
+			}
+			else
+			{
+				this.Size = (Size)size;
+			}
+		}
+
+		/// <summary>
+		/// 表示サイズと表示位置を記録する
+		/// </summary>
+		private void RecordFLocationAndSize()
+		{
+			// 表示位置と表示サイズ記録用のJSONが見つからなかった場合は作成
+			if (!File.Exists(locationAndSizeJsonName))
+			{
+				File.Create(@locationAndSizeJsonName).Dispose();
+			}
+
+			try
+			{
+				// 表示位置および表示サイズを記録
+				var jsonObject = new Dictionary<string, object>
+				{
+					[this.locationKey] = new Dictionary<string, int>
+					{
+						[this.XKey] = this.Location.X,
+						[this.YKey] = this.Location.Y
+					},
+					[this.sizeKey] = new Dictionary<string, int>
+					{
+						[this.WidthKey] = this.Size.Width,
+						[this.HeightKey] = this.Size.Height
+					}
+				};
+
+				// JSON文字列に変換
+				string jsonStr = JsonSerializer.Serialize(jsonObject, new JsonSerializerOptions
+				{
+					WriteIndented = true
+				});
+
+				// JSONファイルに書き込み
+				File.WriteAllText(locationAndSizeJsonName, jsonStr);
+			}
+			catch
+			{
+				return;
+			}
 		}
 
 		/// <summary>
@@ -138,8 +201,8 @@ namespace ChatGPTBrowser
 						return;
 					}
 
+					// 取得データを保持
 					var copy = new DataObject();
-
 					foreach (var format in original.GetFormats())
 					{
 						copy.SetData(format, original.GetData(format));
@@ -185,7 +248,8 @@ namespace ChatGPTBrowser
 						return;
 					}
 
-					// クリップボードの内容を復元
+					// 退避データを復元
+					Clipboard.Clear();
 					Clipboard.SetDataObject(backupData, true);
 				}
 				catch
@@ -215,23 +279,21 @@ namespace ChatGPTBrowser
 			IDataObject backupData = this.BackUpClipBoard();
 			await Task.Delay(waitTime);
 
-			// 送信失敗時に復元できるよう入力したテキストを退避
+			// 送信失敗時の復元用に入力したテキストを退避
 			this.textCreateSpace.Focus();
 			await Task.Delay(waitTime);
 			this.backupText = string.Empty;
 			string sendText = this.textCreateSpace.Text.Trim();
 			this.backupText = sendText;
 
-			// テキストをChatGPTにクリップボード経由で入力
+			// テキストをクリップボードにコピー
 			Clipboard.Clear();
 			Clipboard.SetDataObject(sendText);
 			await Task.Delay(waitTime);
 
-			// ChatGPTViewにフォーカスを移動
+			// ChatGPTのテキストボックスにフォーカスを移動
 			this.chatGPTView.Focus();
 			await Task.Delay(waitTime);
-
-			// ChatGPTのテキストボックスにフォーカスを移動
 			await this.chatGPTView.ExecuteScriptAsync(@"
 				(function() {
 					const promptTextArea = document.querySelector('textarea[data-testid=""prompt-textarea""]');
@@ -251,6 +313,7 @@ namespace ChatGPTBrowser
 			");
 			await Task.Delay(waitTime);
 
+			// ChatGPTのテキストボックスにテキストを貼り付け
 			SendKeys.SendWait("^{v}");
 			await Task.Delay(waitTime);
 
@@ -261,11 +324,11 @@ namespace ChatGPTBrowser
 			// クリップボードの内容を復元
 			this.RestoreClipboard(backupData);
 
-			// テキストをクリア
-			this.textCreateSpace.Clear();
-
 			// テキストボックスにフォーカスを移動
 			this.textCreateSpace.Focus();
+
+			// テキストをクリア
+			this.textCreateSpace.Clear();
 		}
 
 		/// <summary>
@@ -311,35 +374,14 @@ namespace ChatGPTBrowser
 		}
 
 		/// <summary>
-		/// ChatGPTBrowser位置変更イベント
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void ChatGPTBrowser_LocationChanged(object sender, EventArgs e)
-		{
-			// 現在の表示位置を記録
-			this.location = this.Location;
-		}
-
-		/// <summary>
-		/// ChatGPTBrowserサイズ変更イベント
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void ChatGPTBrowser_SizeChanged(object sender, EventArgs e)
-		{
-			// 現在の表示サイズを記録
-			this.size = this.Size;
-		}
-
-		/// <summary>
 		/// ChatGPTBrowser_Deactiveイベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
 		private void ChatGPTBrowser_Deactive(object sender, EventArgs e)
 		{
-			//this.RecordForJson();
+			// 表示位置および表示サイズを記録
+			this.RecordFLocationAndSize();
 		}
 
 		/// <summary>
@@ -349,7 +391,8 @@ namespace ChatGPTBrowser
 		/// <param name="e"></param>
 		private void ChatGPTBrowser_FormClosing(object sender, FormClosingEventArgs e)
 		{
-			//this.RecordForJson();
+			// 表示位置および表示サイズを記録
+			this.RecordFLocationAndSize();
 		}
 
 		/// <summary>
