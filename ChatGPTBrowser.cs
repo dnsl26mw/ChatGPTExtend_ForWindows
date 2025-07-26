@@ -363,7 +363,7 @@ namespace ChatGPTBrowser
 			}
 
 			// 前回送信のテキストを復元
-			if (e.Control && e.Alt && e.KeyCode == Keys.B)
+			if (e.Alt && e.KeyCode == Keys.B)
 			{
 				if (!string.IsNullOrEmpty(this.backupText))
 				{
