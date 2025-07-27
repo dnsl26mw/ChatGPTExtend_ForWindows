@@ -107,6 +107,7 @@
 			this.Text = "ChatGPTBrowser";
 			this.Deactivate += new System.EventHandler(this.ChatGPTBrowser_Deactive);
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ChatGPTBrowser_FormClosing);
+			this.SizeChanged += new System.EventHandler(this.ChatGPTBrowser_SizeChanged);
 			((System.ComponentModel.ISupportInitialize)(this.chatGPTView)).EndInit();
 			this.sendButtonPanel.ResumeLayout(false);
 			this.ResumeLayout(false);

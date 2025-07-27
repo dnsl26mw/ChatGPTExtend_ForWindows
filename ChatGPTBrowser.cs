@@ -125,6 +125,13 @@ namespace ChatGPTBrowser
 			else
 			{
 				this.Location = (Point)location;
+
+				// 最大化されていた場合
+				if (this.Location.Y < 0)
+				{
+					this.WindowState = FormWindowState.Maximized;
+					return;
+				}
 			}
 
 			// 表示サイズ設定
@@ -381,7 +388,10 @@ namespace ChatGPTBrowser
 		private void ChatGPTBrowser_Deactive(object sender, EventArgs e)
 		{
 			// 表示位置および表示サイズを記録
-			this.RecordFLocationAndSize();
+			if (this.WindowState != FormWindowState.Minimized)
+			{
+				this.RecordFLocationAndSize();
+			}
 		}
 
 		/// <summary>
@@ -392,7 +402,23 @@ namespace ChatGPTBrowser
 		private void ChatGPTBrowser_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			// 表示位置および表示サイズを記録
-			this.RecordFLocationAndSize();
+			if (this.WindowState != FormWindowState.Minimized)
+			{
+				this.RecordFLocationAndSize();
+			}
+		}
+
+		/// <summary>
+		/// ChatGPTBrowserサイズ変更イベント
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void ChatGPTBrowser_SizeChanged(object sender, EventArgs e)
+		{
+			if (this.WindowState != FormWindowState.Maximized)
+			{
+				this.CenterToScreen();
+			}
 		}
 
 		/// <summary>
