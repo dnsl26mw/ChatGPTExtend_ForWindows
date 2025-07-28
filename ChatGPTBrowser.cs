@@ -417,6 +417,7 @@ namespace ChatGPTBrowser
 		/// <param name="e"></param>
 		private void ChatGPTBrowser_SizeChanged(object sender, EventArgs e)
 		{
+			// 最大化解除でタイトルバーが隠れないようにするための処理
 			if (this.WindowState != FormWindowState.Maximized)
 			{
 				this.CenterToScreen();
