@@ -22,6 +22,7 @@ namespace ChatGPTBrowser
 {
 	public partial class ChatGPTBrowser : Form
 	{
+		#region フィールド変数
 		// 表示位置と表示サイズを保持するJSONファイル名
 		private string locationAndSizeJsonName = "./locationandsize.json";
 
@@ -45,6 +46,7 @@ namespace ChatGPTBrowser
 
 		// 送信失敗時の復元用のテキスト退避変数
 		private string backupText = string.Empty;
+		#endregion
 
 		public ChatGPTBrowser()
 		{
