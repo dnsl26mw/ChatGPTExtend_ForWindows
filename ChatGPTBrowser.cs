@@ -55,12 +55,13 @@ namespace ChatGPTBrowser
 			// 表示位置と表示サイズを設定
 			this.SetLocationAndSize();
 
+			// ChatGPTView初期化
 			InitializeAsync();
 		}
 
 		#region メソッド
 		/// <summary>
-		/// WebView2コントロール初期化
+		/// ChatGPTView初期化
 		/// </summary>
 		private async void InitializeAsync()
 		{
@@ -71,8 +72,8 @@ namespace ChatGPTBrowser
 			// 開発者ツール無効化
 			this.chatGPTView.CoreWebView2.Settings.AreDevToolsEnabled = false;
 
-			// ダイアログ表示無効化
-			this.chatGPTView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = false;
+			// ステータスバー表示無効化
+			this.chatGPTView.CoreWebView2.Settings.IsStatusBarEnabled = false;
 
 			// テキストボックスにフォーカスを移動
 			this.textCreateSpace.Focus();
