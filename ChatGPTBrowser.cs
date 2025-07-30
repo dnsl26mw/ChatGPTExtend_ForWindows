@@ -68,6 +68,12 @@ namespace ChatGPTBrowser
 			await this.chatGPTView.EnsureCoreWebView2Async();
 			this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
 
+			// 開発者ツール無効化
+			this.chatGPTView.CoreWebView2.Settings.AreDevToolsEnabled = false;
+
+			// ダイアログ表示無効化
+			this.chatGPTView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = false;
+
 			// テキストボックスにフォーカスを移動
 			this.textCreateSpace.Focus();
 		}
