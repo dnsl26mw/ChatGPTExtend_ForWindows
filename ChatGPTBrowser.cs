@@ -141,7 +141,7 @@ namespace ChatGPTBrowser
 				this.Location = (Point)location;
 
 				// 最大化されていた場合
-				if (this.Location.Y < 0)
+				if (this.Location.X < 0 && this.Location.Y < 0)
 				{
 					this.WindowState = FormWindowState.Maximized;
 					return;
@@ -430,9 +430,9 @@ namespace ChatGPTBrowser
 		private void ChatGPTBrowser_SizeChanged(object sender, EventArgs e)
 		{
 			// 最大化解除でタイトルバーが隠れないようにするための処理
-			if (this.WindowState != FormWindowState.Maximized)
+			if (this.Location.Y < 0)
 			{
-				this.CenterToScreen();
+				this.Location = new Point(this.Location.X, 0);
 			}
 		}
 
