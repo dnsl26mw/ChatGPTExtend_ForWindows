@@ -17,6 +17,8 @@ using Microsoft.Web.WebView2.Core;
 using System.IO;
 using System.Text.Json.Serialization;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using System.Diagnostics;
+using System.Security.Policy;
 
 namespace ChatGPTBrowser
 {
@@ -74,6 +76,9 @@ namespace ChatGPTBrowser
 
 			// ステータスバー表示無効化
 			this.chatGPTView.CoreWebView2.Settings.IsStatusBarEnabled = false;
+
+			// 共有チャット以外のチャット内リンクをクリックしたらデフォルトのブラウザを起動
+			this.chatGPTView.CoreWebView2.NewWindowRequested += this.ChatGPTView_NewWindowRequested;
 
 			// テキストボックスにフォーカスを移動
 			this.textCreateSpace.Focus();
@@ -459,6 +464,34 @@ namespace ChatGPTBrowser
 			{
 				// 文字列以外のファイルがドラッグされた場合
 				MessageBox.Show("ファイルの添付はChatGPTの画面で直接行ってください。", "確認", MessageBoxButtons.OK, MessageBoxIcon.Information);
+			}
+		}
+
+		/// <summary>
+		/// ChatGPTView_NewWindowRequestedイベント
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="args"></param>
+		private void ChatGPTView_NewWindowRequested(object sender, Microsoft.Web.WebView2.Core.CoreWebView2NewWindowRequestedEventArgs args)
+		{
+			// クリックしたリンクのURL
+			string uri = args.Uri;
+
+			// ChatGPTの共有リンクは現在の画面で開く
+			if (uri.StartsWith("https://chatgpt.com/share/"))
+			{
+				args.Handled = true;
+				this.chatGPTView.CoreWebView2.Navigate(uri);
+			}
+			else
+			{
+				// それ以外の外部リンクはデフォルトのブラウザで開く
+				args.Handled = true;
+				Process.Start(new ProcessStartInfo
+				{
+					FileName = uri,
+					UseShellExecute = true
+				});
 			}
 		}
 		#endregion
