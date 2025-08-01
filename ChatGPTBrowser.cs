@@ -29,7 +29,7 @@ namespace ChatGPTBrowser
 		private string isMaximizedJsonName = "./ismaximized.json";
 
 		// 表示サイズおよび表示位置を保持するJSONファイル名
-		private string locationAndSizeJsonName = "./locationandsize.json";
+		private string sizeAndLocationJsonName = "./sizeandlocation.json";
 
 		// JSONでの最大化要否保持用のキー
 		string isMaximizedKey = "maximized";
@@ -67,7 +67,7 @@ namespace ChatGPTBrowser
 			InitializeComponent();
 
 			// 表示サイズおよび表示位置を設定
-			this.SetLocationAndSize();
+			this.SetSizeAndLocation();
 
 			// 最大化要否を設定
 			this.SetMaximized();
@@ -102,15 +102,15 @@ namespace ChatGPTBrowser
 		/// <summary>
 		/// 表示サイズおよび表示位置を適用
 		/// </summary>
-		private void SetLocationAndSize()
+		private void SetSizeAndLocation()
 		{
 			try
 			{
 				// 表示サイズおよび表示位置を記録するJSONファイルが存在した場合
-				if (File.Exists(@locationAndSizeJsonName))
+				if (File.Exists(@sizeAndLocationJsonName))
 				{
 					// JSONの内容を取得
-					string json = File.ReadAllText(@locationAndSizeJsonName);
+					string json = File.ReadAllText(@sizeAndLocationJsonName);
 					var data = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
 
 					// 表示サイズおよび表示位置を読み込み
@@ -129,13 +129,13 @@ namespace ChatGPTBrowser
 				else
 				{
 					// 表示サイズおよび表示位置を記録するJSONファイルを作成
-					File.Create(@locationAndSizeJsonName).Dispose();
+					File.Create(@sizeAndLocationJsonName).Dispose();
 
 					// 画面中央に表示
 					this.CenterToScreen();
 
 					// デフォルト表示サイズおよびデフォルト表示位置を記録、保持
-					this.RecordLocationAndSizeJson();
+					this.RecordSizeAndLocationJson();
 				}
 			}
 			catch
@@ -144,14 +144,14 @@ namespace ChatGPTBrowser
 				this.CenterToScreen();
 
 				// デフォルト表示サイズおよびデフォルト表示位置を記録、保持
-				this.RecordLocationAndSizeJson();
+				this.RecordSizeAndLocationJson();
 			}
 		}
 
 		/// <summary>
 		/// 表示サイズおよび表示位置を記録するJSONファイルへの書き込みを行う
 		/// </summary>
-		private void RecordLocationAndSizeJson(Size? size = null, Point ? location = null)
+		private void RecordSizeAndLocationJson(Size? size = null, Point ? location = null)
 		{
 			// デフォルト表示サイズ
 			Size defaultSize = new Size(1280, 720);
@@ -206,9 +206,9 @@ namespace ChatGPTBrowser
 			catch
 			{
 				// JSONファイルが存在しない場合は作成
-				if (!File.Exists(@locationAndSizeJsonName))
+				if (!File.Exists(@sizeAndLocationJsonName))
 				{
-					File.Create(@locationAndSizeJsonName).Dispose();
+					File.Create(@sizeAndLocationJsonName).Dispose();
 				}
 
 				// 表示サイズおよび表示位置を記録
@@ -238,7 +238,7 @@ namespace ChatGPTBrowser
 				});
 
 				// JSONファイルに書き込み
-				File.WriteAllText(locationAndSizeJsonName, jsonStr);
+				File.WriteAllText(this.sizeAndLocationJsonName, jsonStr);
 			}
 		}
 
@@ -360,10 +360,7 @@ namespace ChatGPTBrowser
 		private void DeactiveAndClosing()
 		{
 			// 表示サイズおよび表示位置を記録
-			if (this.WindowState == FormWindowState.Normal)
-			{
-				this.RecordLocationAndSizeJson(this.sizeKeep, this.locationKeep);
-			}
+			this.RecordSizeAndLocationJson(this.sizeKeep, this.locationKeep);
 
 			// 最大化要否を記録
 			this.RecordMaximized(this.WindowState == FormWindowState.Maximized);
