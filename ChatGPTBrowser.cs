@@ -25,8 +25,14 @@ namespace ChatGPTBrowser
 	public partial class ChatGPTBrowser : Form
 	{
 		#region フィールド変数
-		// 表示位置と表示サイズを保持するJSONファイル名
+		// 最大化の要否を保持するJSONファイル名
+		private string isMaximizedJsonName = "./ismaximized.json";
+
+		// 表示サイズおよび表示位置を保持するJSONファイル名
 		private string locationAndSizeJsonName = "./locationandsize.json";
+
+		// JSONでの最大化要否保持用のキー
+		string isMaximizedKey = "maximized";
 
 		// JSONでの表示位置保持用のキー
 		string locationKey = "Location";
@@ -46,6 +52,12 @@ namespace ChatGPTBrowser
 		// JSONでの表示サイズWidth保持用のキー
 		string HeightKey = "Height";
 
+		// 表示サイズを保持
+		private Size sizeKeep = new Size();
+
+		// 表示位置を保持
+		private Point locationKeep = new Point();
+
 		// 送信失敗時の復元用のテキスト退避変数
 		private string backupText = string.Empty;
 		#endregion
@@ -54,8 +66,11 @@ namespace ChatGPTBrowser
 		{
 			InitializeComponent();
 
-			// 表示位置と表示サイズを設定
+			// 表示サイズおよび表示位置を設定
 			this.SetLocationAndSize();
+
+			// 最大化要否を設定
+			this.SetMaximized();
 
 			// ChatGPTView初期化
 			InitializeAsync();
@@ -85,108 +100,131 @@ namespace ChatGPTBrowser
 		}
 
 		/// <summary>
-		/// 表示位置と表示サイズを設定
+		/// 表示サイズおよび表示位置を適用
 		/// </summary>
 		private void SetLocationAndSize()
 		{
 			try
 			{
-				// 前回の表示位置と表示サイズを復元
+				// 表示サイズおよび表示位置を記録するJSONファイルが存在した場合
 				if (File.Exists(@locationAndSizeJsonName))
 				{
 					// JSONの内容を取得
 					string json = File.ReadAllText(@locationAndSizeJsonName);
 					var data = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
 
-					// 表示位置および表示サイズを読み込み
+					// 表示サイズおよび表示位置を読み込み
 					var locationDict = JsonSerializer.Deserialize<Dictionary<string, int>>(data[this.locationKey].GetRawText());
 					var sizeDict = JsonSerializer.Deserialize<Dictionary<string, int>>(data[this.sizeKey].GetRawText());
-
-					// 前回の表示位置
-					Point lastTimeLocation = new Point(locationDict[this.XKey], locationDict[this.YKey]);
 
 					// 前回の表示サイズ
 					Size lastTimeSize = new Size(sizeDict[this.WidthKey], sizeDict[this.HeightKey]);
 
-					// 前回の表示位置および表示サイズを設定
-					this.SetLocationAndSize(lastTimeLocation, lastTimeSize);
+					// 前回の表示位置
+					Point lastTimeLocation = new Point(locationDict[this.XKey], locationDict[this.YKey]);
+
+					// 表示サイズおよび表示位置の保持と設定
+					this.KeepSizeAndLocation(lastTimeSize, lastTimeLocation);
 				}
 				else
 				{
-					// デフォルト表示位置およびデフォルト表示サイズを設定
-					this.SetLocationAndSize(null, null);
+					// 表示サイズおよび表示位置を記録するJSONファイルを作成
+					File.Create(@locationAndSizeJsonName).Dispose();
+
+					// デフォルト表示サイズおよびデフォルト表示位置を記録、保持
+					this.RecordLocationAndSizeJson();
 				}
 			}
 			catch
 			{
-				// デフォルト表示位置およびデフォルト表示サイズを設定
-				this.SetLocationAndSize(null, null);
+				// デフォルト表示サイズおよびデフォルト表示位置を記録、保持
+				this.RecordLocationAndSizeJson();
 			}
 		}
 
 		/// <summary>
-		/// 表示位置と表示サイズを設定
+		/// 表示サイズおよび表示位置を記録するJSONファイルへの書き込みを行う
 		/// </summary>
-		/// <param name="location"></param>
-		/// <param name="size"></param>
-		private void SetLocationAndSize(Point? location = null, Size? size = null)
+		private void RecordLocationAndSizeJson(Size? size = null, Point ? location = null)
 		{
-			// 表示位置設定
-			if (location == null)
-			{
-				this.CenterToScreen();
-			}
-			else
-			{
-				this.Location = (Point)location;
+			// デフォルト表示サイズ
+			Size defaultSize = new Size(1280, 720);
 
-				// 最大化されていた場合
-				if (this.Location.X < 0 && this.Location.Y < 0)
-				{
-					this.WindowState = FormWindowState.Maximized;
-					return;
-				}
-			}
+			// デフォルト表示位置
+			Point defaultLocation = new Point();
 
-			// 表示サイズ設定
-			if (size == null || size.Value.Width < 800 || size.Value.Height < 600)
-			{
-				this.Size = new Size(1200, 720);
-			}
-			else
-			{
-				this.Size = (Size)size;
-			}
-		}
-
-		/// <summary>
-		/// 表示サイズと表示位置を記録する
-		/// </summary>
-		private void RecordFLocationAndSize()
-		{
-			// 表示位置と表示サイズ記録用のJSONが見つからなかった場合は作成
-			if (!File.Exists(locationAndSizeJsonName))
-			{
-				File.Create(@locationAndSizeJsonName).Dispose();
-			}
+			// 表示サイズおよび表示位置を記録するJSONオブジェクト
+			var jsonObject = new Dictionary<string, object>();
 
 			try
 			{
-				// 表示位置および表示サイズを記録
-				var jsonObject = new Dictionary<string, object>
+				// 引数に表示位置および表示サイズが設定されていた場合
+				if (size != null && location != null)
 				{
-					[this.locationKey] = new Dictionary<string, int>
+					// 表示サイズおよび表示位置を記録
+					jsonObject = new Dictionary<string, object>
 					{
-						[this.XKey] = this.Location.X,
-						[this.YKey] = this.Location.Y
-					},
+						[this.sizeKey] = new Dictionary<string, int>
+						{
+							[this.WidthKey] = size.Value.Width,
+							[this.HeightKey] = size.Value.Height
+						},
+						[this.locationKey] = new Dictionary<string, int>
+						{
+							[this.XKey] = location.Value.X,
+							[this.YKey] = location.Value.Y
+						}
+					};
+				}
+				else
+				{
+					// デフォルト表示サイズおよびデフォルト表示位置を記録
+					jsonObject = new Dictionary<string, object>
+					{
+						[this.sizeKey] = new Dictionary<string, int>
+						{
+							[this.WidthKey] = defaultSize.Width,
+							[this.HeightKey] = defaultSize.Height
+						},
+						[this.locationKey] = new Dictionary<string, int>
+						{
+							[this.XKey] = defaultLocation.X,
+							[this.YKey] = defaultLocation.Y
+						}
+					};
+
+					// デフォルト表示サイズおよびデフォルト表示位置を保持
+					this.KeepSizeAndLocation(defaultSize, defaultLocation);
+				}
+			}
+			catch
+			{
+				// JSONファイルが存在しない場合は作成
+				if (!File.Exists(@locationAndSizeJsonName))
+				{
+					File.Create(@locationAndSizeJsonName).Dispose();
+				}
+
+				// 表示サイズおよび表示位置を記録
+				jsonObject = new Dictionary<string, object>
+				{
 					[this.sizeKey] = new Dictionary<string, int>
 					{
-						[this.WidthKey] = this.Size.Width,
-						[this.HeightKey] = this.Size.Height
+						[this.WidthKey] = size.Value.Width,
+						[this.HeightKey] = size.Value.Height
+					},
+					[this.locationKey] = new Dictionary<string, int>
+					{
+						[this.XKey] = location.Value.X,
+						[this.YKey] = location.Value.Y
 					}
 				};
 
+				// デフォルト表示サイズおよびデフォルト表示位置を保持
+				this.KeepSizeAndLocation(defaultSize, defaultLocation);
+			}
+			finally
+			{
 				// JSON文字列に変換
 				string jsonStr = JsonSerializer.Serialize(jsonObject, new JsonSerializerOptions
 				{
@@ -196,9 +234,148 @@ namespace ChatGPTBrowser
 				// JSONファイルに書き込み
 				File.WriteAllText(locationAndSizeJsonName, jsonStr);
 			}
+		}
+
+		/// <summary>
+		/// 表示サイズおよび表示位置の保持
+		/// </summary>
+		/// <param name="size"></param>
+		/// <param name="location"></param>
+		private void KeepSizeAndLocation(Size size, Point location)
+		{
+			// 表示位置の保持
+			this.sizeKeep = size;
+			this.Size = this.sizeKeep;
+
+			// 表示サイズの保持
+			this.locationKeep = location;
+			this.Location = this.locationKeep;
+		}
+
+		/// <summary>
+		/// 最大化要否を設定
+		/// </summary>
+		private void SetMaximized()
+		{
+			// 最大化設定フラグ
+			bool setFlg = false;
+
+			try
+			{
+				// 最大化要否を記録するJSONファイルが存在した場合
+				if (File.Exists(this.isMaximizedJsonName))
+				{
+					// JSONの内容を取得
+					string json = File.ReadAllText(@isMaximizedJsonName);
+					var data = JsonSerializer.Deserialize<Dictionary<string, bool>>(json);
+
+					// 保存済みの最大化要否
+					setFlg = data[this.isMaximizedKey];
+
+					// 最大化要否を設定
+					if (setFlg)
+					{
+						this.WindowState = FormWindowState.Maximized;
+					}
+					else
+					{
+						this.WindowState = FormWindowState.Normal;
+					}
+				}
+				else
+				{
+					// JSONファイルを作成
+					File.Create(this.isMaximizedJsonName).Dispose();
+
+					// 最大化無しを記録
+					this.RecordMaximized(setFlg);
+
+					// 最大化しない
+					this.WindowState = FormWindowState.Normal;
+				}
+			}
 			catch
 			{
-				return;
+				// JSONファイルを作成
+				File.Create(this.isMaximizedJsonName).Dispose();
+
+				// 最大化無しを記録
+				this.RecordMaximized(setFlg);
+
+				// 最大化しない
+				this.WindowState = FormWindowState.Normal;
+			}
+		}
+
+		/// <summary>
+		/// 最大化要否を記録するJSONファイルへの書き込みを行う
+		/// </summary>
+		private void RecordMaximized(bool flg)
+		{
+			// 最大化要否を記録するJSONオブジェクト
+			var jsonObject = new Dictionary<string, bool>();
+
+			try
+			{
+				// 最大化要否を記録
+				jsonObject = new Dictionary<string, bool>
+				{
+					[this.isMaximizedKey] = flg
+				};
+			}
+			catch
+			{
+				// 最大化要否を記録するJSONファイルが存在しない場合
+				if (!File.Exists(this.isMaximizedJsonName))
+				{
+					// JSONファイルを作成
+					File.Create(this.isMaximizedJsonName).Dispose();
+				}
+
+				// 最大化要否を記録
+				jsonObject = new Dictionary<string, bool>
+				{
+					[this.isMaximizedKey] = flg
+				};
+			}
+			finally
+			{
+				// JSON文字列に変換
+				string jsonStr = JsonSerializer.Serialize(jsonObject, new JsonSerializerOptions
+				{
+					WriteIndented = true
+				});
+
+				// JSONファイルに書き込み
+				File.WriteAllText(this.isMaximizedJsonName, jsonStr);
+			}
+		}
+
+		/// <summary>
+		/// DeactiveイベントおよびClosingイベント共通処理
+		/// </summary>
+		private void DeactiveAndClosing()
+		{
+			// 表示サイズおよび表示位置を記録
+			if (this.WindowState == FormWindowState.Normal)
+			{
+				this.RecordLocationAndSizeJson(this.sizeKeep, this.locationKeep);
+			}
+
+			// 最大化要否を記録
+			this.RecordMaximized(this.WindowState == FormWindowState.Maximized);
+		}
+
+		/// <summary>
+		/// フォーム移動イベントおよびサイズ変更イベント共通処理
+		/// </summary>
+		private void MoveAndSizeChanged()
+		{
+			// 最小化および最大化でない場合は保持
+			if (this.WindowState == FormWindowState.Normal)
+			{
+				this.sizeKeep = this.Size;
+				this.locationKeep = this.Location;
 			}
 		}
 
@@ -401,11 +578,8 @@ namespace ChatGPTBrowser
 		/// <param name="e"></param>
 		private void ChatGPTBrowser_Deactive(object sender, EventArgs e)
 		{
-			// 表示位置および表示サイズを記録
-			if (this.WindowState != FormWindowState.Minimized)
-			{
-				this.RecordFLocationAndSize();
-			}
+			// DeactiveイベントおよびClosingイベント共通処理
+			this.DeactiveAndClosing();
 		}
 
 		/// <summary>
@@ -415,11 +589,19 @@ namespace ChatGPTBrowser
 		/// <param name="e"></param>
 		private void ChatGPTBrowser_FormClosing(object sender, FormClosingEventArgs e)
 		{
-			// 表示位置および表示サイズを記録
-			if (this.WindowState != FormWindowState.Minimized)
-			{
-				this.RecordFLocationAndSize();
-			}
+			// DeactiveイベントおよびClosingイベント共通処理
+			this.DeactiveAndClosing();
+		}
+
+		/// <summary>
+		/// ChatGPTBrowser_フォーム移動イベント
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void ChatGPTBrowser_Move(object sender, EventArgs e)
+		{
+			// フォーム移動イベントおよびサイズ変更イベント共通処理
+			this.MoveAndSizeChanged();
 		}
 
 		/// <summary>
@@ -429,11 +611,8 @@ namespace ChatGPTBrowser
 		/// <param name="e"></param>
 		private void ChatGPTBrowser_SizeChanged(object sender, EventArgs e)
 		{
-			// 最大化解除でタイトルバーが隠れないようにするための処理
-			if (this.Location.Y < 0)
-			{
-				this.Location = new Point(this.Location.X, 0);
-			}
+			// フォーム移動イベントおよびサイズ変更イベント共通処理
+			this.MoveAndSizeChanged();
 		}
 
 		/// <summary>
