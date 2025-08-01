@@ -123,7 +123,7 @@ namespace ChatGPTBrowser
 					// 前回の表示位置
 					Point lastTimeLocation = new Point(locationDict[this.XKey], locationDict[this.YKey]);
 
-					// 表示サイズおよび表示位置の保持と設定
+					// 表示サイズおよび表示位置の保持と適用
 					this.KeepSizeAndLocation(lastTimeSize, lastTimeLocation);
 				}
 				else
@@ -134,7 +134,7 @@ namespace ChatGPTBrowser
 					// 画面中央に表示
 					this.CenterToScreen();
 
-					// デフォルト表示サイズおよびデフォルト表示位置を記録、保持
+					// デフォルト表示サイズおよびデフォルト表示位置を記録と保持
 					this.RecordSizeAndLocationJson();
 				}
 			}
@@ -143,7 +143,7 @@ namespace ChatGPTBrowser
 				// 画面中央に表示
 				this.CenterToScreen();
 
-				// デフォルト表示サイズおよびデフォルト表示位置を記録、保持
+				// デフォルト表示サイズおよびデフォルト表示位置を記録と保持
 				this.RecordSizeAndLocationJson();
 			}
 		}
@@ -153,12 +153,6 @@ namespace ChatGPTBrowser
 		/// </summary>
 		private void RecordSizeAndLocationJson(Size? size = null, Point ? location = null)
 		{
-			// デフォルト表示サイズ
-			Size defaultSize = new Size(1280, 720);
-
-			// デフォルト表示位置(CenterToScreenを行って表示された位置)
-			Point defaultLocation = this.Location;
-
 			// 表示サイズおよび表示位置を記録するJSONオブジェクト
 			var jsonObject = new Dictionary<string, object>();
 
@@ -189,18 +183,18 @@ namespace ChatGPTBrowser
 					{
 						[this.sizeKey] = new Dictionary<string, int>
 						{
-							[this.WidthKey] = defaultSize.Width,
-							[this.HeightKey] = defaultSize.Height
+							[this.WidthKey] = this.Width,
+							[this.HeightKey] = this.Height
 						},
 						[this.locationKey] = new Dictionary<string, int>
 						{
-							[this.XKey] = defaultLocation.X,
-							[this.YKey] = defaultLocation.Y
+							[this.XKey] = this.Location.X,
+							[this.YKey] = this.Location.Y
 						}
 					};
 
 					// デフォルト表示サイズおよびデフォルト表示位置を保持
-					this.KeepSizeAndLocation(defaultSize, defaultLocation);
+					this.KeepSizeAndLocation(this.Size, this.Location);
 				}
 			}
 			catch
@@ -226,8 +220,8 @@ namespace ChatGPTBrowser
 					}
 				};
 
-				// デフォルト表示サイズおよびデフォルト表示位置を保持
-				this.KeepSizeAndLocation(defaultSize, defaultLocation);
+				// 表示サイズおよび表示位置を保持
+				this.KeepSizeAndLocation(size.Value, location.Value);
 			}
 			finally
 			{
@@ -243,7 +237,7 @@ namespace ChatGPTBrowser
 		}
 
 		/// <summary>
-		/// 表示サイズおよび表示位置の保持
+		/// 起動時の表示サイズおよび表示位置の保持と適用
 		/// </summary>
 		/// <param name="size"></param>
 		/// <param name="location"></param>
