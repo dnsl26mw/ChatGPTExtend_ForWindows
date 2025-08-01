@@ -131,12 +131,18 @@ namespace ChatGPTBrowser
 					// 表示サイズおよび表示位置を記録するJSONファイルを作成
 					File.Create(@locationAndSizeJsonName).Dispose();
 
+					// 画面中央に表示
+					this.CenterToScreen();
+
 					// デフォルト表示サイズおよびデフォルト表示位置を記録、保持
 					this.RecordLocationAndSizeJson();
 				}
 			}
 			catch
 			{
+				// 画面中央に表示
+				this.CenterToScreen();
+
 				// デフォルト表示サイズおよびデフォルト表示位置を記録、保持
 				this.RecordLocationAndSizeJson();
 			}
@@ -150,8 +156,8 @@ namespace ChatGPTBrowser
 			// デフォルト表示サイズ
 			Size defaultSize = new Size(1280, 720);
 
-			// デフォルト表示位置
-			Point defaultLocation = new Point();
+			// デフォルト表示位置(CenterToScreenを行って表示された位置)
+			Point defaultLocation = this.Location;
 
 			// 表示サイズおよび表示位置を記録するJSONオブジェクト
 			var jsonObject = new Dictionary<string, object>();
@@ -296,9 +302,6 @@ namespace ChatGPTBrowser
 			}
 			catch
 			{
-				// JSONファイルを作成
-				File.Create(this.isMaximizedJsonName).Dispose();
-
 				// 最大化無しを記録
 				this.RecordMaximized(setFlg);
 
