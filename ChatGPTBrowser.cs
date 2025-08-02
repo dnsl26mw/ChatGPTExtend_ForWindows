@@ -483,7 +483,7 @@ namespace ChatGPTBrowser
 			Clipboard.SetDataObject(sendText);
 			await Task.Delay(waitTime);
 
-			// ChatGPTのテキストボックスにフォーカスを移動
+			// ChatGPTのテキストボックスのクリックを再現することでフォーカスを合わせる
 			this.chatGPTView.Focus();
 			await Task.Delay(waitTime);
 			await this.chatGPTView.ExecuteScriptAsync(@"
@@ -503,6 +503,12 @@ namespace ChatGPTBrowser
 					}
 				})();
 			");
+			await Task.Delay(waitTime);
+
+			// ChatGPTのテキストボックスで半角スペースとバックスペースの押下で人間らしい動きを再現
+			SendKeys.SendWait(" ");
+			await Task.Delay(waitTime);
+			SendKeys.SendWait("{BACKSPACE}");
 			await Task.Delay(waitTime);
 
 			// ChatGPTのテキストボックスにテキストを貼り付け
