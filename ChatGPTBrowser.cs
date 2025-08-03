@@ -52,6 +52,7 @@ namespace ChatGPTBrowser
 
 		public ChatGPTBrowser()
 		{
+			#region 初期化
 			InitializeComponent();
 
 			// 表示サイズおよび表示位置を設定
@@ -62,6 +63,7 @@ namespace ChatGPTBrowser
 
 			// ChatGPTView初期化
 			InitializeAsync();
+			#endregion
 		}
 
 		#region メソッド
