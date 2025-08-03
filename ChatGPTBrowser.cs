@@ -60,6 +60,14 @@ namespace ChatGPTBrowser
 
 		// 送信失敗時の復元用のテキスト退避変数
 		private string backupText = string.Empty;
+
+		// 未確定文字列の有無
+		private bool isTextComposing = false;
+
+		const int WM_IME_STARTCOMPOSITION = 0x010D;
+		const int WM_IME_ENDCOMPOSITION = 0x010E;
+		const int WM_IME_COMPOSITION = 0x010F;
+		const int GCS_COMPSTR = 0x0008;
 		#endregion
 
 		public ChatGPTBrowser()
@@ -474,6 +482,8 @@ namespace ChatGPTBrowser
 			// 送信失敗時の復元用に入力したテキストを退避
 			this.textCreateSpace.Focus();
 			await Task.Delay(waitTime);
+
+			// 入力テキスト送信用文字列変数にセットおよびバックアップ
 			this.backupText = string.Empty;
 			string sendText = this.textCreateSpace.Text.Trim();
 			this.backupText = sendText;
@@ -485,6 +495,12 @@ namespace ChatGPTBrowser
 
 			// ChatGPTのテキストボックスにフォーカスを合わせる(クリック動作の再現)
 			this.chatGPTView.Focus();
+			await Task.Delay(waitTime);
+
+			// 画像が全画面表示されていた場合に備え、エスケープキー押下を再現
+			SendKeys.SendWait("{ESC}");
+			await Task.Delay(waitTime);
+
 			await Task.Delay(waitTime);
 			await this.chatGPTView.ExecuteScriptAsync(@"
 				(function() {
