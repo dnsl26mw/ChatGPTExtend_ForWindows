@@ -60,14 +60,6 @@ namespace ChatGPTBrowser
 
 		// 送信失敗時の復元用のテキスト退避変数
 		private string backupText = string.Empty;
-
-		// 未確定文字列の有無
-		private bool isTextComposing = false;
-
-		const int WM_IME_STARTCOMPOSITION = 0x010D;
-		const int WM_IME_ENDCOMPOSITION = 0x010E;
-		const int WM_IME_COMPOSITION = 0x010F;
-		const int GCS_COMPSTR = 0x0008;
 		#endregion
 
 		public ChatGPTBrowser()
