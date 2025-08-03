@@ -1,24 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics.Eventing.Reader;
 using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.Windows.Forms;
-using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Runtime.InteropServices;
-using System.Windows.Forms.VisualStyles;
-using Microsoft.Web.WebView2.Core;
 using System.IO;
-using System.Text.Json.Serialization;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using System.Diagnostics;
-using System.Security.Policy;
 
 namespace ChatGPTBrowser
 {
