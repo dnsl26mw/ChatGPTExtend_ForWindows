@@ -117,22 +117,52 @@ namespace ChatGPTBrowser
 					var locationDict = JsonSerializer.Deserialize<Dictionary<string, int>>(data[this.locationKey].GetRawText());
 					var sizeDict = JsonSerializer.Deserialize<Dictionary<string, int>>(data[this.sizeKey].GetRawText());
 
-					// 前回の表示サイズ
-					Size lastTimeSize = new Size(sizeDict[this.WidthKey], sizeDict[this.HeightKey]);
+					// 保存済みの表示サイズ
+					Size savedSize = new Size(sizeDict[this.WidthKey], sizeDict[this.HeightKey]);
 
-					// 前回の表示位置
-					Point lastTimeLocation = new Point(locationDict[this.XKey], locationDict[this.YKey]);
+					// 保存済みの表示位置
+					Point savedLocation = new Point(locationDict[this.XKey], locationDict[this.YKey]);
 
-					// 表示サイズおよび表示位置の保持と適用
-					this.KeepSizeAndLocation(lastTimeSize, lastTimeLocation);
+					// 保存済みの表示サイズのX座標が0未満の場合
+					if (savedLocation.X < 0)
+					{
+						savedLocation.X = 0;
+					}
+
+					// 保存済みの表示サイズのX座標が0未満の場合
+					if (savedLocation.Y < 0)
+					{
+						savedLocation.Y = 0;
+					}
+
+					// 保存済みの表示位置が画面内に収まっている場合
+					if (this.IsLocationSetTrue(savedLocation))
+					{
+						// 表示位置を適用
+						this.Location = savedLocation;
+
+						// 保存済みの表示サイズが表示対象画面のサイズ以下の場合
+						if (this.IsSetSizeTrue(savedSize))
+						{
+							// 保存済みの表示サイズおよび保存済みの表示位置を保持
+							this.KeepSizeAndLocation(savedSize, savedLocation);
+						}
+						else
+						{
+							// デフォルト表示サイズおよびデフォルト表示位置を記録と保持
+							this.RecordSizeAndLocationJson();
+						}
+					}
+					else
+					{
+						// デフォルト表示サイズおよびデフォルト表示位置を記録と保持
+						this.RecordSizeAndLocationJson();
+					}
 				}
 				else
 				{
 					// 表示サイズおよび表示位置を記録するJSONファイルを作成
 					File.Create(@sizeAndLocationJsonName).Dispose();
-
-					// 画面中央に表示
-					this.CenterToScreen();
 
 					// デフォルト表示サイズおよびデフォルト表示位置を記録と保持
 					this.RecordSizeAndLocationJson();
@@ -140,12 +170,43 @@ namespace ChatGPTBrowser
 			}
 			catch
 			{
-				// 画面中央に表示
-				this.CenterToScreen();
-
 				// デフォルト表示サイズおよびデフォルト表示位置を記録と保持
 				this.RecordSizeAndLocationJson();
 			}
+		}
+
+
+		/// <summary>
+		/// 起動時に読み込んだ保存済みの表示位置が画面内に収まるかどうかを判定
+		/// </summary>
+		/// <param name="location"></param>
+		/// <returns></returns>
+		private bool IsLocationSetTrue(Point location)
+		{
+			// 有効なディスプレイをすべて取得
+			foreach (var screen in Screen.AllScreens)
+			{
+				// 保存済みの表示位置が画面内に収まっている場合
+				if (screen.WorkingArea.Contains(location))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// 起動時に読み込んだ保存済みの表示サイズが表示対象のディスプレイの画面サイズ以下かどうかを判定
+		/// </summary>
+		/// <param name="size"></param>
+		/// <returns></returns>
+		private bool IsSetSizeTrue(Size size)
+		{
+			// 表示されたディスプレイを取得
+			var screen = System.Windows.Forms.Screen.FromControl(this);
+
+			// 保存済みの表示サイズが表示対象画面のサイズ以下かどうかを返す
+			return size.Width <= screen.Bounds.Width && size.Height <= screen.Bounds.Height;
 		}
 
 		/// <summary>
@@ -153,6 +214,9 @@ namespace ChatGPTBrowser
 		/// </summary>
 		private void RecordSizeAndLocationJson(Size? size = null, Point ? location = null)
 		{
+			// デフォルト表示サイズ
+			Size defaultSize = new Size(1280, 720);
+
 			// 表示サイズおよび表示位置を記録するJSONオブジェクト
 			var jsonObject = new Dictionary<string, object>();
 
@@ -178,13 +242,16 @@ namespace ChatGPTBrowser
 				}
 				else
 				{
+					// 画面中央に表示
+					this.CenterToScreen();
+
 					// デフォルト表示サイズおよびデフォルト表示位置を記録
 					jsonObject = new Dictionary<string, object>
 					{
 						[this.sizeKey] = new Dictionary<string, int>
 						{
-							[this.WidthKey] = this.Width,
-							[this.HeightKey] = this.Height
+							[this.WidthKey] = defaultSize.Width,
+							[this.HeightKey] = defaultSize.Height
 						},
 						[this.locationKey] = new Dictionary<string, int>
 						{
@@ -194,7 +261,7 @@ namespace ChatGPTBrowser
 					};
 
 					// デフォルト表示サイズおよびデフォルト表示位置を保持
-					this.KeepSizeAndLocation(this.Size, this.Location);
+					this.KeepSizeAndLocation(defaultSize, this.Location);
 				}
 			}
 			catch
