@@ -45,9 +45,6 @@ namespace ChatGPTBrowser
 
 		// 表示位置を保持
 		private Point locationKeep = new Point();
-
-		// 送信失敗時の復元用のテキスト退避変数
-		private string backupText = string.Empty;
 		#endregion
 
 		public ChatGPTBrowser()
@@ -521,8 +518,16 @@ namespace ChatGPTBrowser
 		/// <param name="e"></param>
 		private async void SendButton_Click(object sender, EventArgs e)
 		{
-			// DOM変更待ち時間
+			// 送信ボタン無効化
+			this.sendButton.Enabled = false;
+
+			// 送信ボタンクリックイベント内待ち時間
 			int waitTime = 100;
+
+			// 入力テキストを送信用文字列変数にセット
+			this.textCreateSpace.Focus();
+			await Task.Delay(waitTime);
+			string sendText = this.textCreateSpace.Text.Trim();
 
 			// クリップボードの内容を退避
 			IDataObject backupData = this.BackUpClipBoard();
@@ -530,16 +535,6 @@ namespace ChatGPTBrowser
 
 			// 送信失敗時の復元用に入力したテキストを退避
 			this.textCreateSpace.Focus();
-			await Task.Delay(waitTime);
-
-			// 入力テキスト送信用文字列変数にセットおよびバックアップ
-			this.backupText = string.Empty;
-			string sendText = this.textCreateSpace.Text.Trim();
-			this.backupText = sendText;
-
-			// テキストをクリップボードにコピー
-			Clipboard.Clear();
-			Clipboard.SetDataObject(sendText);
 			await Task.Delay(waitTime);
 
 			// ChatGPTのテキストボックスにフォーカスを合わせる(クリック動作の再現)
@@ -550,48 +545,86 @@ namespace ChatGPTBrowser
 			SendKeys.SendWait("{ESC}");
 			await Task.Delay(waitTime);
 
-			await Task.Delay(waitTime);
-			await this.chatGPTView.ExecuteScriptAsync(@"
-				(function() {
-					const promptTextArea = document.querySelector('textarea[data-testid=""prompt-textarea""]');
-					if (promptTextArea) {
-						const mousedown = new MouseEvent('mousedown', { bubbles: true });
-						const mouseup = new MouseEvent('mouseup', { bubbles: true });
-						const click = new MouseEvent('click', { bubbles: true });
+			// ChatGPTのテキストボックスが入力可能になるまで待つ
+			string result = await this.chatGPTView.ExecuteScriptAsync(@"
+				(() => {
+					const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-						promptTextArea.dispatchEvent(mousedown);
-						promptTextArea.dispatchEvent(mouseup);
-						promptTextArea.dispatchEvent(click);
+					return new Promise(async (resolve) => {
+						while (true) {
+							const promptDiv = document.querySelector('textarea[data-testid=""prompt-textarea""]');
 
-						promptTextArea.focus();
-						promptTextArea.select();
-					}
-				})();
+							if (promptDiv && promptDiv.getAttribute('contenteditable') !== 'false') {
+					
+								const mousedown = new MouseEvent('mousedown', { bubbles: true });
+								const mouseup = new MouseEvent('mouseup', { bubbles: true });
+								const click = new MouseEvent('click', { bubbles: true });
+
+								promptDiv.dispatchEvent(mousedown);
+								promptDiv.dispatchEvent(mouseup);
+								promptDiv.dispatchEvent(click);
+
+								promptDiv.focus();
+
+								resolve('ready');
+								break;
+							}
+							await sleep(100);
+						}
+					});
+				})()
 			");
 			await Task.Delay(waitTime);
+			result = result?.Trim('"');
 
-			// ChatGPTのテキストボックスへのテキストの貼り付けを可能にする(半角スペース入力→バックスペース押下)
-			SendKeys.SendWait(" ");
-			await Task.Delay(waitTime);
-			SendKeys.SendWait("{BACKSPACE}");
-			await Task.Delay(waitTime);
+			// ChatGPTのテキストボックスが有効になった場合のみ送信
+			if (result != null && result.Contains("ready"))
+			{
+				// ChatGPTのテキストボックスにキーの空打ちを行い、テキストの貼り付けを可能にする
+				SendKeys.SendWait(" ");
+				await Task.Delay(waitTime);
+				SendKeys.SendWait("{BACKSPACE}");
+				await Task.Delay(waitTime);
 
-			// ChatGPTのテキストボックスにテキストを貼り付け
-			SendKeys.SendWait("^{v}");
-			await Task.Delay(waitTime);
+				// テキストをクリップボードにコピー
+				Clipboard.Clear();
+				Clipboard.SetDataObject(sendText);
+				await Task.Delay(waitTime);
 
-			// 送信
-			SendKeys.SendWait("{ENTER}");
-			await Task.Delay(waitTime);
+				// ChatGPTのテキストボックスにテキストを貼り付け
+				SendKeys.SendWait("^{v}");
+				await Task.Delay(waitTime);
+
+				// 送信
+				SendKeys.SendWait("{ENTER}");
+				await Task.Delay(waitTime);
+
+				// テキストボックスにフォーカスを移動
+				this.textCreateSpace.Focus();
+
+				// テキストをクリア
+				this.textCreateSpace.Clear();
+			}
+			else
+			{
+				// テキストボックスにフォーカスを移動
+				this.textCreateSpace.Focus();
+
+				// テキストをクリア
+				this.textCreateSpace.Clear();
+
+				// テキストを復元
+				this.textCreateSpace.Text = sendText.Trim();
+
+				// テキストボックスの末尾にカーソルを移動
+				this.textCreateSpace.Select(this.textCreateSpace.Text.Length, 0);
+			}
 
 			// クリップボードの内容を復元
 			this.RestoreClipboard(backupData);
 
-			// テキストボックスにフォーカスを移動
-			this.textCreateSpace.Focus();
-
-			// テキストをクリア
-			this.textCreateSpace.Clear();
+			// 送信ボタン有効化
+			this.sendButton.Enabled = true;
 		}
 
 		/// <summary>
@@ -623,16 +656,6 @@ namespace ChatGPTBrowser
 			{
 				this.textCreateSpace.Select(this.textCreateSpace.Text.Length, 0);
 				SendButton_Click(sender, e);
-			}
-
-			// 前回送信のテキストを復元
-			if (e.Alt && e.KeyCode == Keys.B)
-			{
-				if (!string.IsNullOrEmpty(this.backupText))
-				{
-					this.textCreateSpace.Text = this.backupText;
-					this.textCreateSpace.Select(this.textCreateSpace.Text.Length, 0);
-				}
 			}
 		}
 
