@@ -45,6 +45,9 @@ namespace ChatGPTBrowser
 
 		// 表示位置を保持
 		private Point locationKeep = new Point();
+
+		// 送信テキストバックアップ用変数
+		private string backupText = string.Empty;
 		#endregion
 
 		public ChatGPTBrowser()
@@ -521,10 +524,11 @@ namespace ChatGPTBrowser
 			// DOM変更待ち時間
 			int waitTime = 100;
 
-			// 入力テキストを送信用文字列変数にセット
+			// 入力テキストを送信用文字列変数にセットおよびバックアップ
 			this.textCreateSpace.Focus();
 			await Task.Delay(waitTime);
 			string sendText = this.textCreateSpace.Text.Trim();
+			this.backupText = sendText;
 
 			// クリップボードの内容を退避
 			IDataObject backupData = this.BackUpClipBoard();
@@ -533,11 +537,6 @@ namespace ChatGPTBrowser
 			// 送信失敗時の復元用に入力したテキストを退避
 			this.textCreateSpace.Focus();
 			await Task.Delay(waitTime);
-
-			// 入力テキスト送信用文字列変数にセットおよびバックアップ
-			this.backupText = string.Empty;
-			string sendText = this.textCreateSpace.Text.Trim();
-			this.backupText = sendText;
 
 			// テキストをクリップボードにコピー
 			Clipboard.Clear();
