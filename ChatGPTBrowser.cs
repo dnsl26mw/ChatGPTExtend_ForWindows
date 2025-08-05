@@ -1,24 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics.Eventing.Reader;
 using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.Windows.Forms;
-using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Runtime.InteropServices;
-using System.Windows.Forms.VisualStyles;
-using Microsoft.Web.WebView2.Core;
 using System.IO;
-using System.Text.Json.Serialization;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using System.Diagnostics;
-using System.Security.Policy;
 
 namespace ChatGPTBrowser
 {
@@ -57,13 +45,11 @@ namespace ChatGPTBrowser
 
 		// 表示位置を保持
 		private Point locationKeep = new Point();
-
-		// 送信失敗時の復元用のテキスト退避変数
-		private string backupText = string.Empty;
 		#endregion
 
 		public ChatGPTBrowser()
 		{
+			#region 初期化
 			InitializeComponent();
 
 			// 表示サイズおよび表示位置を設定
@@ -74,6 +60,7 @@ namespace ChatGPTBrowser
 
 			// ChatGPTView初期化
 			InitializeAsync();
+			#endregion
 		}
 
 		#region メソッド
@@ -534,6 +521,11 @@ namespace ChatGPTBrowser
 			// DOM変更待ち時間
 			int waitTime = 100;
 
+			// 入力テキストを送信用文字列変数にセット
+			this.textCreateSpace.Focus();
+			await Task.Delay(waitTime);
+			string sendText = this.textCreateSpace.Text.Trim();
+
 			// クリップボードの内容を退避
 			IDataObject backupData = this.BackUpClipBoard();
 			await Task.Delay(waitTime);
@@ -570,14 +562,19 @@ namespace ChatGPTBrowser
 						const mouseup = new MouseEvent('mouseup', { bubbles: true });
 						const click = new MouseEvent('click', { bubbles: true });
 
-						promptTextArea.dispatchEvent(mousedown);
-						promptTextArea.dispatchEvent(mouseup);
-						promptTextArea.dispatchEvent(click);
+								promptDiv.dispatchEvent(mousedown);
+								promptDiv.dispatchEvent(mouseup);
+								promptDiv.dispatchEvent(click);
 
-						promptTextArea.focus();
-						promptTextArea.select();
-					}
-				})();
+								promptDiv.focus();
+
+								resolve('ready');
+								break;
+							}
+							await sleep(100);
+						}
+					});
+				})()
 			");
 			await Task.Delay(waitTime);
 
@@ -634,16 +631,6 @@ namespace ChatGPTBrowser
 			{
 				this.textCreateSpace.Select(this.textCreateSpace.Text.Length, 0);
 				SendButton_Click(sender, e);
-			}
-
-			// 前回送信のテキストを復元
-			if (e.Alt && e.KeyCode == Keys.B)
-			{
-				if (!string.IsNullOrEmpty(this.backupText))
-				{
-					this.textCreateSpace.Text = this.backupText;
-					this.textCreateSpace.Select(this.textCreateSpace.Text.Length, 0);
-				}
 			}
 		}
 
