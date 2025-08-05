@@ -552,7 +552,7 @@ namespace ChatGPTBrowser
 			Clipboard.SetDataObject(sendText);
 			await Task.Delay(waitTime);
 
-			// ChatGPTのテキストボックスにフォーカスを合わせる(クリック動作の再現)
+			// ChatGPTViewにフォーカスを合わせる
 			this.chatGPTView.Focus();
 			await Task.Delay(waitTime);
 
@@ -560,6 +560,7 @@ namespace ChatGPTBrowser
 			SendKeys.SendWait("{ESC}");
 			await Task.Delay(waitTime);
 
+			// チャットGPTのテキストボックスにフォーカスを合わせる
 			await Task.Delay(waitTime);
 			await this.chatGPTView.ExecuteScriptAsync(@"
 				(function() {
