@@ -631,6 +631,16 @@ namespace ChatGPTBrowser
 				this.textCreateSpace.Select(this.textCreateSpace.Text.Length, 0);
 				SendButton_Click(sender, e);
 			}
+
+			// 前回送信のテキストを復元
+			if (e.Alt && e.KeyCode == Keys.B)
+			{
+				if (!string.IsNullOrEmpty(this.backupText))
+				{
+					this.textCreateSpace.Text = this.backupText;
+					this.textCreateSpace.Select(this.textCreateSpace.Text.Length, 0);
+				}
+			}
 		}
 
 		/// <summary>
