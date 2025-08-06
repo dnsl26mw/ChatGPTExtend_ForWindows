@@ -61,6 +61,9 @@ namespace ChatGPTBrowser
 			// 最大化要否を設定
 			this.SetMaximized();
 
+			// 送信ボタンにツールチップ追加
+			this.sendButtonToolTip.SetToolTip(this.sendButton, "送信(Ctrl + Enter)");
+
 			// ChatGPTView初期化
 			InitializeAsync();
 			#endregion
@@ -744,6 +747,17 @@ namespace ChatGPTBrowser
 					UseShellExecute = true
 				});
 			}
+		}
+
+		/// <summary>
+		/// 送信ボタンMouseHoverイベント
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void SendButton_MouseHover(object sender, EventArgs e)
+		{
+			// 送信ボタンにマウスカーソルをかざしたら手の形に変更
+			this.sendButton.Cursor = Cursors.Hand;
 		}
 		#endregion
 	}

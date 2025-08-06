@@ -28,11 +28,13 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
+			this.components = new System.ComponentModel.Container();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChatGPTBrowser));
 			this.chatGPTView = new Microsoft.Web.WebView2.WinForms.WebView2();
 			this.sendButton = new System.Windows.Forms.Button();
 			this.sendButtonPanel = new System.Windows.Forms.Panel();
 			this.textCreateSpace = new System.Windows.Forms.TextBox();
+			this.sendButtonToolTip = new System.Windows.Forms.ToolTip(this.components);
 			((System.ComponentModel.ISupportInitialize)(this.chatGPTView)).BeginInit();
 			this.sendButtonPanel.SuspendLayout();
 			this.SuspendLayout();
@@ -63,6 +65,7 @@
 			this.sendButton.Text = "送信";
 			this.sendButton.UseVisualStyleBackColor = true;
 			this.sendButton.Click += new System.EventHandler(this.SendButton_Click);
+			this.sendButton.MouseHover += new System.EventHandler(this.SendButton_MouseHover);
 			// 
 			// sendButtonPanel
 			// 
@@ -122,6 +125,7 @@
 		private System.Windows.Forms.Button sendButton;
 		private System.Windows.Forms.Panel sendButtonPanel;
 		private System.Windows.Forms.TextBox textCreateSpace;
+		private System.Windows.Forms.ToolTip sendButtonToolTip;
 	}
 }
 
