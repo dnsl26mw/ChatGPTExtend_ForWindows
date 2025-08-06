@@ -555,7 +555,6 @@ namespace ChatGPTBrowser
 			await Task.Delay(waitTime);
 
 			// チャットGPTのテキストボックスにフォーカスを合わせる
-			await Task.Delay(waitTime);
 			await this.chatGPTView.ExecuteScriptAsync(@"
 				(function() {
 					const promptTextArea = document.querySelector('textarea[data-testid=""prompt-textarea""]');
@@ -564,21 +563,15 @@ namespace ChatGPTBrowser
 						const mouseup = new MouseEvent('mouseup', { bubbles: true });
 						const click = new MouseEvent('click', { bubbles: true });
 
-								promptDiv.dispatchEvent(mousedown);
-								promptDiv.dispatchEvent(mouseup);
-								promptDiv.dispatchEvent(click);
+						promptTextArea.dispatchEvent(mousedown);
+						promptTextArea.dispatchEvent(mouseup);
+						promptTextArea.dispatchEvent(click);
 
-								promptDiv.focus();
-
-								resolve('ready');
-								break;
-							}
-							await sleep(100);
-						}
-					});
+						promptTextArea.focus();
+						promptTextArea.select();
+					}
 				})()
 			");
-			await Task.Delay(waitTime);
 
 			// ChatGPTのテキストボックスへのテキストの貼り付けを可能にする(半角スペース入力→バックスペース押下)
 			SendKeys.SendWait(" ");
