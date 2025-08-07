@@ -46,7 +46,7 @@ namespace ChatGPTBrowser
 		// 表示位置を保持
 		private Point locationKeep = new Point();
 
-		// 送信テキストバックアップ用変数
+		// 送信したテキストをバックアップ
 		private string backupText = string.Empty;
 		#endregion
 
