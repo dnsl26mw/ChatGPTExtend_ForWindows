@@ -514,6 +514,88 @@ namespace ChatGPTBrowser
 			thread.Start();
 			thread.Join();
 		}
+
+		/// <summary>
+		/// ChatGPTのテキストボックスにフォーカスを合わせる
+		/// </summary>
+		private async void FocusPromptTextArea()
+		{
+			await this.chatGPTView.ExecuteScriptAsync(@"
+				(function() {
+					const promptTextArea = document.querySelector('textarea[data-testid=""prompt-textarea""]');
+					if (promptTextArea) {
+						const mousedown = new MouseEvent('mousedown', { bubbles: true });
+						const mouseup = new MouseEvent('mouseup', { bubbles: true });
+						const click = new MouseEvent('click', { bubbles: true });
+
+						promptTextArea.dispatchEvent(mousedown);
+						promptTextArea.dispatchEvent(mouseup);
+						promptTextArea.dispatchEvent(click);
+
+						promptTextArea.focus();
+						promptTextArea.select();
+					}
+				})()
+			");
+		}
+
+		/// <summary>
+		/// ChatGPTのテキストボックスの内容が入力したテキストと一致するか判定
+		/// </summary>
+		/// <returns></returns>
+		private async Task<bool> IsMatchedText(string sendText)
+		{
+			// sendText を JS の文字列リテラルとして安全に渡す
+			string jsonText = System.Text.Json.JsonSerializer.Serialize(sendText);
+
+			string script = $@"
+				(function() {{
+				const promptTextArea = document.querySelector('textarea[data-testid=""prompt-textarea""]');
+				if (!promptTextArea) return false;
+					return promptTextArea.value.includes({jsonText});
+				}})()
+			";
+
+			string retStr = await this.chatGPTView.ExecuteScriptAsync(script);
+			string result = retStr.Trim('"');
+			return bool.TryParse(result, out var matched) && matched;
+		}
+
+		/// <summary>
+		/// ChatGPTのテキストボックスの内容が入力したテキストと一致したら送信を行う
+		/// </summary>
+		/// <param name="sendText"></param>
+		/// <returns></returns>
+		private async Task WaitUntilMatchedAndSend(string sendText, int waitTime, IDataObject backupData)
+		{
+			// 一致するまで待機
+			while (true)
+			{
+				// 一致したらEnter押下で送信
+				if (await this.IsMatchedText(sendText))
+				{
+					// ChatGPTのテキストボックスにフォーカスを合わせる
+					SendKeys.SendWait("+{TAB}");
+					await Task.Delay(waitTime);
+
+					// 送信
+					SendKeys.SendWait("{ENTER}");
+					await Task.Delay(waitTime);
+
+					// クリップボードの内容を復元
+					this.RestoreClipboard(backupData);
+
+					// テキストボックスにフォーカスを移動
+					this.textCreateSpace.Focus();
+
+					// テキストをクリア
+					this.textCreateSpace.Clear();
+
+					break;
+				}
+				await Task.Delay(waitTime);
+			}
+		}
 		#endregion
 
 		#region イベント
@@ -554,24 +636,9 @@ namespace ChatGPTBrowser
 			SendKeys.SendWait("{ESC}");
 			await Task.Delay(waitTime);
 
-			// チャットGPTのテキストボックスにフォーカスを合わせる
-			await this.chatGPTView.ExecuteScriptAsync(@"
-				(function() {
-					const promptTextArea = document.querySelector('textarea[data-testid=""prompt-textarea""]');
-					if (promptTextArea) {
-						const mousedown = new MouseEvent('mousedown', { bubbles: true });
-						const mouseup = new MouseEvent('mouseup', { bubbles: true });
-						const click = new MouseEvent('click', { bubbles: true });
-
-						promptTextArea.dispatchEvent(mousedown);
-						promptTextArea.dispatchEvent(mouseup);
-						promptTextArea.dispatchEvent(click);
-
-						promptTextArea.focus();
-						promptTextArea.select();
-					}
-				})()
-			");
+			// ChatGPTのテキストボックスにフォーカスを合わせる
+			this.FocusPromptTextArea();
+			await Task.Delay(waitTime);
 
 			// ChatGPTのテキストボックスへのテキストの貼り付けを可能にする(半角スペース入力→バックスペース押下)
 			SendKeys.SendWait(" ");
@@ -583,18 +650,9 @@ namespace ChatGPTBrowser
 			SendKeys.SendWait("^{v}");
 			await Task.Delay(waitTime);
 
-			// 送信
-			SendKeys.SendWait("{ENTER}");
+			// ChatGPTのテキストボックスの内容が入力したテキストと一致したら送信
+			await this.WaitUntilMatchedAndSend(sendText, waitTime, backupData);
 			await Task.Delay(waitTime);
-
-			// クリップボードの内容を復元
-			this.RestoreClipboard(backupData);
-
-			// テキストボックスにフォーカスを移動
-			this.textCreateSpace.Focus();
-
-			// テキストをクリア
-			this.textCreateSpace.Clear();
 		}
 
 		/// <summary>
