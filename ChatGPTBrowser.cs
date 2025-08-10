@@ -45,9 +45,6 @@ namespace ChatGPTBrowser
 
 		// 表示位置を保持
 		private Point locationKeep = new Point();
-
-		// 送信したテキストをバックアップ
-		private string backupText = string.Empty;
 		#endregion
 
 		public ChatGPTBrowser()
@@ -613,7 +610,6 @@ namespace ChatGPTBrowser
 			this.textCreateSpace.Focus();
 			await Task.Delay(waitTime);
 			string sendText = this.textCreateSpace.Text.Trim();
-			this.backupText = sendText;
 
 			// クリップボードの内容を退避
 			IDataObject backupData = this.BackUpClipBoard();
@@ -684,16 +680,6 @@ namespace ChatGPTBrowser
 			{
 				this.textCreateSpace.Select(this.textCreateSpace.Text.Length, 0);
 				SendButton_Click(sender, e);
-			}
-
-			// 前回送信のテキストを復元
-			if (e.Alt && e.KeyCode == Keys.B)
-			{
-				if (!string.IsNullOrEmpty(this.backupText))
-				{
-					this.textCreateSpace.Text = this.backupText;
-					this.textCreateSpace.Select(this.textCreateSpace.Text.Length, 0);
-				}
 			}
 		}
 
