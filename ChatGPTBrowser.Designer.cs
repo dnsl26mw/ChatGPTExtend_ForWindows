@@ -43,7 +43,7 @@
 			this.chatGPTView.DefaultBackgroundColor = System.Drawing.Color.White;
 			this.chatGPTView.Location = new System.Drawing.Point(1, 1);
 			this.chatGPTView.Name = "chatGPTView";
-			this.chatGPTView.Size = new System.Drawing.Size(1261, 679);
+			this.chatGPTView.Size = new System.Drawing.Size(1262, 679);
 			this.chatGPTView.TabIndex = 0;
 			this.chatGPTView.ZoomFactor = 1D;
 			// 
