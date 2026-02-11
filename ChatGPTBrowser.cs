@@ -1,18 +1,20 @@
-﻿using System;
+﻿using Microsoft.Web.WebView2.Core;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Threading.Tasks;
-using System.Text.Json;
-using System.Windows.Forms;
-using System.Threading;
-using System.IO;
 using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Threading;
+using System.Windows.Forms;
 
 namespace ChatGPTBrowser
 {
 	public partial class ChatGPTBrowser : Form
 	{
 		#region フィールド変数
+
 		// 最大化の要否を保持するJSONファイル名
 		private string isMaximizedJsonName = "./ismaximized.json";
 
@@ -45,35 +47,55 @@ namespace ChatGPTBrowser
 
 		// 表示位置を保持
 		private Point locationKeep = new Point();
+
 		#endregion
 
+		/// <summary>
+		/// コンストラクタ
+		/// </summary>
 		public ChatGPTBrowser()
 		{
-			#region 初期化
 			InitializeComponent();
+
+			// ChatGPTView初期化
+			InitializeAsync();
 
 			// 表示サイズおよび表示位置を設定
 			this.SetSizeAndLocation();
 
 			// 最大化要否を設定
 			this.SetMaximized();
-
-			// 送信ボタンにツールチップ追加
-			this.sendButtonToolTip.SetToolTip(this.sendButton, "送信(Ctrl + Enter)");
-
-			// ChatGPTView初期化
-			InitializeAsync();
-			#endregion
 		}
 
 		#region メソッド
+
 		/// <summary>
 		/// ChatGPTView初期化
 		/// </summary>
 		private async void InitializeAsync()
 		{
-			// ChatGPTを読み込み
+			// ChatGPTviewの初期化
 			await this.chatGPTView.EnsureCoreWebView2Async();
+
+			// WebMessageReceivedイベントの追加
+			this.chatGPTView.CoreWebView2.WebMessageReceived += ChatGPTView_WebMessageReceived;
+
+			await this.chatGPTView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
+				window.addEventListener('keydown', function(e) {
+					
+					// Enter押下の場合
+					if (e.key === 'Enter' && !e.altKey && !e.shiftKey && !e.ctrlKey) {
+						
+						e.preventDefault();
+						e.stopPropagation();
+						sendMessage = 'enter';
+						
+						chrome.webview.postMessage('enter');
+					}
+				}, true);
+			");
+
+			// ChatGPTに移動
 			this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
 
 			// 開発者ツール無効化
@@ -84,9 +106,6 @@ namespace ChatGPTBrowser
 
 			// 共有チャット以外のチャット内リンクをクリックしたらデフォルトのブラウザを起動
 			this.chatGPTView.CoreWebView2.NewWindowRequested += this.ChatGPTView_NewWindowRequested;
-
-			// テキストボックスにフォーカスを移動
-			this.textCreateSpace.Focus();
 		}
 
 		/// <summary>
@@ -201,8 +220,10 @@ namespace ChatGPTBrowser
 
 		/// <summary>
 		/// 表示サイズおよび表示位置を記録するJSONファイルへの書き込みを行う
+		/// <param name="size"></param>
+		/// <param name="location"></param>
 		/// </summary>
-		private void RecordSizeAndLocationJson(Size? size = null, Point ? location = null)
+		private void RecordSizeAndLocationJson(Size? size = null, Point? location = null)
 		{
 			// デフォルト表示サイズ
 			Size defaultSize = new Size(1280, 720);
@@ -430,115 +451,25 @@ namespace ChatGPTBrowser
 			}
 		}
 
-		/// <summary>
-		/// ChatGPTのテキストボックスにフォーカスを合わせる
-		/// </summary>
-		private async void FocusPromptTextArea()
-		{
-			await this.chatGPTView.ExecuteScriptAsync(@"
-				(function() {
-					const promptTextArea = document.querySelector('textarea[data-testid=""prompt-textarea""]');
-					if (promptTextArea) {
-						const mousedown = new MouseEvent('mousedown', { bubbles: true });
-						const mouseup = new MouseEvent('mouseup', { bubbles: true });
-						const click = new MouseEvent('click', { bubbles: true });
-
-						promptTextArea.dispatchEvent(mousedown);
-						promptTextArea.dispatchEvent(mouseup);
-						promptTextArea.dispatchEvent(click);
-
-						promptTextArea.focus();
-						promptTextArea.select();
-					}
-				})()
-			");
-		}
 		#endregion
 
 		#region イベント
-		/// <summary>
-		/// 送信ボタンクリックイベント
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private async void SendButton_Click(object sender, EventArgs e)
-		{
-			// DOM変更基本待ち時間
-			int waitTime = 100;
-
-			// 入力テキストを送信用文字列変数にセット
-			this.textCreateSpace.Focus();
-			await Task.Delay(waitTime);
-			string sendText = this.textCreateSpace.Text.Trim();
-
-			// 送信失敗時の復元用に入力したテキストを退避
-			this.textCreateSpace.Focus();
-			await Task.Delay(waitTime);
-
-			// テキストをクリップボードにコピー
-			Clipboard.Clear();
-			Clipboard.SetDataObject(sendText);
-			await Task.Delay(waitTime);
-
-			// ChatGPTViewにフォーカスを合わせる
-			this.chatGPTView.Focus();
-			await Task.Delay(waitTime);
-
-			// 画像が全画面表示されていた場合に備え、エスケープキー押下を再現
-			SendKeys.SendWait("{ESC}");
-			await Task.Delay(waitTime);
-
-			// ChatGPTのテキストボックスにフォーカスを合わせる
-			this.FocusPromptTextArea();
-			await Task.Delay(waitTime);
-
-			// ChatGPTのテキストボックスへのテキストの貼り付けを可能にする(半角スペース入力→バックスペース押下)
-			SendKeys.SendWait(" ");
-			await Task.Delay(waitTime);
-			SendKeys.SendWait("{BACKSPACE}");
-			await Task.Delay(waitTime);
-
-			// ChatGPTのテキストボックスにテキストを貼り付け
-			SendKeys.SendWait("^{v}");
-			await Task.Delay(waitTime);
-
-			// 送信
-			SendKeys.SendWait("^{ENTER}");
-			await Task.Delay(waitTime);
-
-			// テキストボックスをクリア
-			this.textCreateSpace.Clear();
-		}
 
 		/// <summary>
-		/// テキストボックスのテキスト変更イベント
+		/// ChatGPTView_WebMessageReceivedイベント
 		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void TextCreateSpace_TextChanged(object sender, EventArgs e)
+		/// <returns></returns>
+		private void ChatGPTView_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
 		{
-			if (!string.IsNullOrEmpty(this.textCreateSpace.Text.Trim()))
-			{
-				this.sendButton.Enabled = true;
-			}
-			else
-			{
-				this.sendButton.Enabled = false;
-			}
-		}
+			// キー押下メッセージを取得
+			string msg = string.Empty;
+			msg = e.TryGetWebMessageAsString();
 
-		/// <summary>
-		/// テキストボックスKeyDownイベント
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void TextCreateSpace_KeyDown(object sender, KeyEventArgs e)
-		{
-			// 送信ボタンクリックイベントの呼び出し
-			if (e.Control && e.KeyCode == Keys.Enter)
+			// Enter押下の場合
+			if (string.Equals(msg, "enter"))
 			{
-				this.textCreateSpace.Select(this.textCreateSpace.Text.Length, 0);
-				SendButton_Click(sender, e);
+				// Shift + Enterを送信
+				SendKeys.SendWait("+{ENTER}");
 			}
 		}
 
@@ -587,37 +518,6 @@ namespace ChatGPTBrowser
 		}
 
 		/// <summary>
-		/// テキストボックスDragEnterイベント
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void TextCreateSpace_DragEnter(object sender, DragEventArgs e)
-		{
-			// テキストボックスにドラッグ操作を許可
-			e.Effect = DragDropEffects.Copy;
-		}
-
-		/// <summary>
-		/// テキストボックスドラッグ&ドロップイベント
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void TextCreateSpace_DragDrop(object sender, DragEventArgs e)
-		{
-			if (e.Data.GetDataPresent(DataFormats.Text))
-			{
-				// 文字列がドラッグされた場合
-				this.textCreateSpace.Text += (string)e.Data.GetData(DataFormats.Text);
-				this.textCreateSpace.Select(this.textCreateSpace.Text.Length, 0);
-			}
-			else
-			{
-				// 文字列以外のファイルがドラッグされた場合
-				MessageBox.Show("ファイルの添付はChatGPTの画面で直接行ってください。", "確認", MessageBoxButtons.OK, MessageBoxIcon.Information);
-			}
-		}
-
-		/// <summary>
 		/// ChatGPTView_NewWindowRequestedイベント
 		/// </summary>
 		/// <param name="sender"></param>
@@ -645,16 +545,6 @@ namespace ChatGPTBrowser
 			}
 		}
 
-		/// <summary>
-		/// 送信ボタンMouseHoverイベント
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void SendButton_MouseHover(object sender, EventArgs e)
-		{
-			// 送信ボタンにマウスカーソルをかざしたら手の形に変更
-			this.sendButton.Cursor = Cursors.Hand;
-		}
 		#endregion
 	}
 }
