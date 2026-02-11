@@ -36,9 +36,9 @@
 			// chatGPTView
 			// 
 			this.chatGPTView.AllowExternalDrop = true;
-			this.chatGPTView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+			this.chatGPTView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+			| System.Windows.Forms.AnchorStyles.Left)
+			| System.Windows.Forms.AnchorStyles.Right)));
 			this.chatGPTView.CreationProperties = null;
 			this.chatGPTView.DefaultBackgroundColor = System.Drawing.Color.White;
 			this.chatGPTView.Location = new System.Drawing.Point(1, 1);

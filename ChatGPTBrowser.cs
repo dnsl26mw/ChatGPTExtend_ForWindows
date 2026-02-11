@@ -1,18 +1,20 @@
-﻿using System;
+﻿using Microsoft.Web.WebView2.Core;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Threading.Tasks;
-using System.Text.Json;
-using System.Windows.Forms;
-using System.Threading;
-using System.IO;
 using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Threading;
+using System.Windows.Forms;
 
 namespace ChatGPTBrowser
 {
 	public partial class ChatGPTBrowser : Form
 	{
 		#region フィールド変数
+
 		// 最大化の要否を保持するJSONファイル名
 		private string isMaximizedJsonName = "./ismaximized.json";
 
@@ -45,32 +47,55 @@ namespace ChatGPTBrowser
 
 		// 表示位置を保持
 		private Point locationKeep = new Point();
+
 		#endregion
 
+		/// <summary>
+		/// コンストラクタ
+		/// </summary>
 		public ChatGPTBrowser()
 		{
-			#region 初期化
 			InitializeComponent();
+
+			// ChatGPTView初期化
+			InitializeAsync();
 
 			// 表示サイズおよび表示位置を設定
 			this.SetSizeAndLocation();
 
 			// 最大化要否を設定
 			this.SetMaximized();
-
-			// ChatGPTView初期化
-			InitializeAsync();
-			#endregion
 		}
 
 		#region メソッド
+
 		/// <summary>
 		/// ChatGPTView初期化
 		/// </summary>
 		private async void InitializeAsync()
 		{
-			// ChatGPTを読み込み
+			// ChatGPTviewの初期化
 			await this.chatGPTView.EnsureCoreWebView2Async();
+
+			// WebMessageReceivedイベントの追加
+			this.chatGPTView.CoreWebView2.WebMessageReceived += ChatGPTView_WebMessageReceived;
+
+			await this.chatGPTView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
+				window.addEventListener('keydown', function(e) {
+					
+					// Enter押下の場合
+					if (e.key === 'Enter' && !e.altKey && !e.shiftKey && !e.ctrlKey) {
+						
+						e.preventDefault();
+						e.stopPropagation();
+						sendMessage = 'enter';
+						
+						chrome.webview.postMessage('enter');
+					}
+				}, true);
+			");
+
+			// ChatGPTに移動
 			this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
 
 			// 開発者ツール無効化
@@ -195,8 +220,10 @@ namespace ChatGPTBrowser
 
 		/// <summary>
 		/// 表示サイズおよび表示位置を記録するJSONファイルへの書き込みを行う
+		/// <param name="size"></param>
+		/// <param name="location"></param>
 		/// </summary>
-		private void RecordSizeAndLocationJson(Size? size = null, Point ? location = null)
+		private void RecordSizeAndLocationJson(Size? size = null, Point? location = null)
 		{
 			// デフォルト表示サイズ
 			Size defaultSize = new Size(1280, 720);
@@ -427,6 +454,25 @@ namespace ChatGPTBrowser
 		#endregion
 
 		#region イベント
+
+		/// <summary>
+		/// ChatGPTView_WebMessageReceivedイベント
+		/// </summary>
+		/// <returns></returns>
+		private void ChatGPTView_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+		{
+			// キー押下メッセージを取得
+			string msg = string.Empty;
+			msg = e.TryGetWebMessageAsString();
+
+			// Enter押下の場合
+			if (string.Equals(msg, "enter"))
+			{
+				// Shift + Enterを送信
+				SendKeys.SendWait("+{ENTER}");
+			}
+		}
+
 		/// <summary>
 		/// ChatGPTBrowser_Deactiveイベント
 		/// </summary>
@@ -472,17 +518,6 @@ namespace ChatGPTBrowser
 		}
 
 		/// <summary>
-		/// テキストボックスDragEnterイベント
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void TextCreateSpace_DragEnter(object sender, DragEventArgs e)
-		{
-			// テキストボックスにドラッグ操作を許可
-			e.Effect = DragDropEffects.Copy;
-		}
-
-		/// <summary>
 		/// ChatGPTView_NewWindowRequestedイベント
 		/// </summary>
 		/// <param name="sender"></param>
@@ -509,6 +544,7 @@ namespace ChatGPTBrowser
 				});
 			}
 		}
+
 		#endregion
 	}
 }
