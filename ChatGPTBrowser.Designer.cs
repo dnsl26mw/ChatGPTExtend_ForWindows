@@ -28,17 +28,19 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
+			this.components = new System.ComponentModel.Container();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChatGPTBrowser));
 			this.chatGPTView = new Microsoft.Web.WebView2.WinForms.WebView2();
+			this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
 			((System.ComponentModel.ISupportInitialize)(this.chatGPTView)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// chatGPTView
 			// 
 			this.chatGPTView.AllowExternalDrop = true;
-			this.chatGPTView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-			| System.Windows.Forms.AnchorStyles.Left)
-			| System.Windows.Forms.AnchorStyles.Right)));
+			this.chatGPTView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
 			this.chatGPTView.CreationProperties = null;
 			this.chatGPTView.DefaultBackgroundColor = System.Drawing.Color.White;
 			this.chatGPTView.Location = new System.Drawing.Point(1, 1);
@@ -46,6 +48,12 @@
 			this.chatGPTView.Size = new System.Drawing.Size(1262, 679);
 			this.chatGPTView.TabIndex = 0;
 			this.chatGPTView.ZoomFactor = 1D;
+			// 
+			// notifyIcon
+			// 
+			this.notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon.Icon")));
+			this.notifyIcon.Text = "ChatGPTBrowser";
+			this.notifyIcon.Visible = true;
 			// 
 			// ChatGPTBrowser
 			// 
@@ -71,6 +79,7 @@
 		#endregion
 
 		private Microsoft.Web.WebView2.WinForms.WebView2 chatGPTView;
+		private System.Windows.Forms.NotifyIcon notifyIcon;
 	}
 }
 
