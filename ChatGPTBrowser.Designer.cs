@@ -32,6 +32,7 @@
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChatGPTBrowser));
 			this.chatGPTView = new Microsoft.Web.WebView2.WinForms.WebView2();
 			this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
+			this.chatGPTViewContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
 			((System.ComponentModel.ISupportInitialize)(this.chatGPTView)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -51,9 +52,16 @@
 			// 
 			// notifyIcon
 			// 
+			this.notifyIcon.ContextMenuStrip = this.chatGPTViewContextMenu;
 			this.notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon.Icon")));
 			this.notifyIcon.Text = "ChatGPTBrowser";
 			this.notifyIcon.Visible = true;
+			// 
+			// chatGPTViewContextMenu
+			// 
+			this.chatGPTViewContextMenu.Name = "chatGPTViewContextMenu";
+			this.chatGPTViewContextMenu.Size = new System.Drawing.Size(61, 4);
+			this.chatGPTViewContextMenu.Text = "ChatGPTBrowser";
 			// 
 			// ChatGPTBrowser
 			// 
@@ -80,6 +88,7 @@
 
 		private Microsoft.Web.WebView2.WinForms.WebView2 chatGPTView;
 		private System.Windows.Forms.NotifyIcon notifyIcon;
+		private System.Windows.Forms.ContextMenuStrip chatGPTViewContextMenu;
 	}
 }
 
