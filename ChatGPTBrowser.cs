@@ -15,11 +15,14 @@ namespace ChatGPTBrowser
 	{
 		#region フィールド変数
 
+		// 表示サイズおよび表示位置を保持するJSONファイル名
+		private string sizeAndLocationJsonName = "./sizeandlocation.json";
+
 		// 最大化の要否を保持するJSONファイル名
 		private string isMaximizedJsonName = "./ismaximized.json";
 
-		// 表示サイズおよび表示位置を保持するJSONファイル名
-		private string sizeAndLocationJsonName = "./sizeandlocation.json";
+		// Enter押下による改行有効化の要否を保持するJSONファイル名
+		private string isEnterLineBreakJsonName = "./isenterlinebreak.json";
 
 		// JSONでの最大化要否保持用のキー
 		string isMaximizedKey = "maximized";
@@ -42,11 +45,17 @@ namespace ChatGPTBrowser
 		// JSONでの表示サイズWidth保持用のキー
 		string HeightKey = "Height";
 
+		// JSONでのEnter押下による改行有効化の要否保持用のキー
+		string isEnterLineBreakKey = "enterLineBreak";
+
 		// 表示サイズを保持
 		private Size sizeKeep = new Size();
 
 		// 表示位置を保持
 		private Point locationKeep = new Point();
+
+		// Enter押下による改行有効化の要否を保持
+		private bool isEnterLineBreakKeep = false;
 
 		#endregion
 
@@ -56,6 +65,9 @@ namespace ChatGPTBrowser
 		public ChatGPTBrowser()
 		{
 			InitializeComponent();
+
+			// Enter押下による改行有効化の要否を設定
+			this.SetEnterLineBreak();
 
 			// ChatGPTView初期化
 			InitializeAsync();
@@ -80,20 +92,25 @@ namespace ChatGPTBrowser
 			// WebMessageReceivedイベントの追加
 			this.chatGPTView.CoreWebView2.WebMessageReceived += ChatGPTView_WebMessageReceived;
 
-			await this.chatGPTView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
-				window.addEventListener('keydown', function(e) {
+			// Enter押下による改行を行う場合
+			if (this.isEnterLineBreakKeep)
+			{
+				// Enter押下による改行有効化のためのJavaScriptコードをchatGPTViewに追加
+				await this.chatGPTView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
+					window.addEventListener('keydown', function(e) {
 					
-					// Enter押下の場合
-					if (e.key === 'Enter' && !e.altKey && !e.shiftKey && !e.ctrlKey) {
+						// Enter押下の場合
+						if (e.key === 'Enter' && !e.altKey && !e.shiftKey && !e.ctrlKey) {
 						
-						e.preventDefault();
-						e.stopPropagation();
-						sendMessage = 'enter';
+							e.preventDefault();
+							e.stopPropagation();
+							sendMessage = 'enter';
 						
-						chrome.webview.postMessage('enter');
-					}
-				}, true);
-			");
+							chrome.webview.postMessage('enter');
+						}
+					}, true);
+				");
+			}
 
 			// ChatGPTに移動
 			this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
@@ -109,7 +126,7 @@ namespace ChatGPTBrowser
 		}
 
 		/// <summary>
-		/// 表示サイズおよび表示位置を適用
+		/// 表示サイズおよび表示位置を設定
 		/// </summary>
 		private void SetSizeAndLocation()
 		{
@@ -277,7 +294,7 @@ namespace ChatGPTBrowser
 			}
 			catch
 			{
-				// JSONファイルが存在しない場合は作成
+				// 表示サイズおよび表示位置を記録するJSONファイルが存在しない場合は作成
 				if (!File.Exists(@sizeAndLocationJsonName))
 				{
 					File.Create(@sizeAndLocationJsonName).Dispose();
@@ -309,8 +326,8 @@ namespace ChatGPTBrowser
 					WriteIndented = true
 				});
 
-				// JSONファイルに書き込み
-				File.WriteAllText(this.sizeAndLocationJsonName, jsonStr);
+				// 表示サイズおよび表示位置を記録するJSONファイルへの書き込み
+				File.WriteAllText(@sizeAndLocationJsonName, jsonStr);
 			}
 		}
 
@@ -341,9 +358,9 @@ namespace ChatGPTBrowser
 			try
 			{
 				// 最大化要否を記録するJSONファイルが存在した場合
-				if (File.Exists(this.isMaximizedJsonName))
+				if (File.Exists(@isMaximizedJsonName))
 				{
-					// JSONの内容を取得
+					// 最大化要否を記録するJSONファイルの内容を取得
 					string json = File.ReadAllText(@isMaximizedJsonName);
 					var data = JsonSerializer.Deserialize<Dictionary<string, bool>>(json);
 
@@ -362,8 +379,8 @@ namespace ChatGPTBrowser
 				}
 				else
 				{
-					// JSONファイルを作成
-					File.Create(this.isMaximizedJsonName).Dispose();
+					// 最大化要否を記録するJSONファイルを作成
+					File.Create(@isMaximizedJsonName).Dispose();
 
 					// 最大化無しを記録
 					this.RecordMaximized(setFlg);
@@ -401,10 +418,10 @@ namespace ChatGPTBrowser
 			catch
 			{
 				// 最大化要否を記録するJSONファイルが存在しない場合
-				if (!File.Exists(this.isMaximizedJsonName))
+				if (!File.Exists(@isMaximizedJsonName))
 				{
-					// JSONファイルを作成
-					File.Create(this.isMaximizedJsonName).Dispose();
+					// 最大化要否を記録するJSONファイルJSONファイルを作成
+					File.Create(@isMaximizedJsonName).Dispose();
 				}
 
 				// 最大化要否を記録
@@ -421,8 +438,8 @@ namespace ChatGPTBrowser
 					WriteIndented = true
 				});
 
-				// JSONファイルに書き込み
-				File.WriteAllText(this.isMaximizedJsonName, jsonStr);
+				// 最大化要否を記録するJSONファイルJSONファイルへの書き込み
+				File.WriteAllText(@isMaximizedJsonName, jsonStr);
 			}
 		}
 
@@ -448,6 +465,92 @@ namespace ChatGPTBrowser
 			{
 				this.sizeKeep = this.Size;
 				this.locationKeep = this.Location;
+			}
+		}
+
+		/// <summary>
+		/// Enter押下による改行有効化の要否の設定
+		/// </summary>
+		private void SetEnterLineBreak()
+		{
+			// Enter押下による改行有効化設定フラグ
+			bool setFlg = false;
+
+			try
+			{
+				// Enter押下による改行有効化設定を記録するJSONファイルが存在しない場合
+				if (!File.Exists(@isEnterLineBreakJsonName))
+				{
+					// Enter押下による改行有効化設定を記録するJSONファイルを作成
+					File.Create(@isEnterLineBreakJsonName).Dispose();
+
+					// Enter押下による改行有効化設定を記録するJSONファイルへの書き込みを行う
+					this.RecordEnterLineBreak(setFlg);
+				}
+
+				// Enter押下による改行有効化設定を記録するJSONの内容を取得
+				string json = File.ReadAllText(@isEnterLineBreakJsonName);
+				var data = JsonSerializer.Deserialize<Dictionary<string, bool>>(json);
+
+				// 保存済みのEnter押下による改行有効化設定
+				setFlg = data[this.isEnterLineBreakKey];
+			}
+			catch
+			{
+				// Enter押下による改行有効化設定を記録するJSONファイルを作成
+				File.Create(@isEnterLineBreakJsonName).Dispose();
+
+				// Enter押下による改行有効化設定を記録するJSONファイルへの書き込みを行う
+				this.RecordEnterLineBreak(setFlg);
+			}
+			finally
+			{
+				// Enter押下による改行要否を設定
+				this.isEnterLineBreakKeep = setFlg;
+			}
+		}
+
+		/// <summary>
+		/// Enter押下による改行要否を記録するJSONファイルへの書き込みを行う
+		/// </summary>
+		private void RecordEnterLineBreak(bool flg)
+		{
+			// Enter押下による改行要否を記録するJSONオブジェクト
+			var jsonObject = new Dictionary<string, bool>();
+
+			try
+			{
+				// Enter押下による改行要否を記録
+				jsonObject = new Dictionary<string, bool>
+				{
+					[this.isEnterLineBreakKey] = flg
+				};
+			}
+			catch
+			{
+				// Enter押下による改行要否を記録するJSONファイルが存在しない場合
+				if (!File.Exists(@isEnterLineBreakJsonName))
+				{
+					// JSONファイルを作成
+					File.Create(@isEnterLineBreakJsonName).Dispose();
+				}
+
+				// Enter押下による改行要否を記録
+				jsonObject = new Dictionary<string, bool>
+				{
+					[this.isEnterLineBreakKey] = flg
+				};
+			}
+			finally
+			{
+				// JSON文字列に変換
+				string jsonStr = JsonSerializer.Serialize(jsonObject, new JsonSerializerOptions
+				{
+					WriteIndented = true
+				});
+
+				// Enter押下による改行要否を記録するJSONファイルへの書き込み
+				File.WriteAllText(@isEnterLineBreakJsonName, jsonStr);
 			}
 		}
 
