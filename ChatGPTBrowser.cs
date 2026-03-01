@@ -1,12 +1,12 @@
 ﻿using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.WinForms;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text.Json;
-using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace ChatGPTBrowser
@@ -57,6 +57,9 @@ namespace ChatGPTBrowser
 		// Enter押下による改行有効化の要否を保持
 		private bool isEnterLineBreakKeep = false;
 
+		// ユーザデータ
+		private CoreWebView2Environment chatGPTViewEnvironment;
+
 		#endregion
 
 		/// <summary>
@@ -69,14 +72,14 @@ namespace ChatGPTBrowser
 			// Enter押下による改行有効化の要否を設定
 			this.SetEnterLineBreak();
 
-			// ChatGPTView初期化
-			InitializeAsync();
-
 			// 表示サイズおよび表示位置を設定
 			this.SetSizeAndLocation();
 
 			// 最大化要否を設定
 			this.SetMaximized();
+
+			// ChatGPTView初期化
+			this.ChatGPTViewInitialize();
 		}
 
 		#region メソッド
@@ -84,45 +87,119 @@ namespace ChatGPTBrowser
 		/// <summary>
 		/// ChatGPTView初期化
 		/// </summary>
-		private async void InitializeAsync()
+		private async void ChatGPTViewInitialize()
 		{
-			// ChatGPTviewの初期化
-			await this.chatGPTView.EnsureCoreWebView2Async();
+			// ユーザデータ保持
+			this.chatGPTViewEnvironment = await CoreWebView2Environment.CreateAsync(null, Path.Combine(Application.StartupPath, "UserData"));
 
+			// chatGPTViewの初期化
+			await this.chatGPTView.EnsureCoreWebView2Async(chatGPTViewEnvironment);
+
+			// 初期化および再生成時の共通処理
+			this.InitAndRegenerateCommonProc(this.chatGPTView);
+
+			// ChatGPTに移動
+			this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
+		}
+
+		/// <summary>
+		/// ChatGPTView再生成
+		/// </summary>
+		/// <returns></returns>
+		private async Task ReGenerateChatGPTView()
+		{
+			// ユーザデータがNULLの場合
+			if (this.chatGPTViewEnvironment == null)
+			{
+				return;
+			}
+
+			// chatGPTViewがNULLの場合
+			if (this.chatGPTView == null)
+			{
+				return;
+			}
+
+			// chatGPTView.CoreWebView2がNULLの場合
+			if (this.chatGPTView.CoreWebView2 == null)
+			{
+				return;
+			}
+
+			// 現在のchatGPTViewを取得
+			var oldView = this.chatGPTView;
+
+			// 現在のURLを取得
+			string url = oldView.CoreWebView2.Source;
+
+			// 新しいchatGPTViewを生成
+			var newView = new WebView2();
+			newView.Dock = DockStyle.Fill;
+			newView.Visible = false;
+			this.Controls.Add(newView);
+
+			// 新しいchatGPTViewのchatGPTView.CoreWebView2の初期化
+			await newView.EnsureCoreWebView2Async(this.chatGPTViewEnvironment);
+
+			// 初期化および再生成時の共通処理
+			this.InitAndRegenerateCommonProc(newView);
+
+			// 新しいchatGPTViewで現在のURLを読み込み
+			newView.CoreWebView2.Navigate(url);
+
+			// ホワイトアウト防止のため、読み込み完了まで待機
+			var tcs = new TaskCompletionSource<bool>();
+			newView.CoreWebView2.NavigationCompleted += (s, e) =>
+			{
+				tcs.TrySetResult(true);
+			};
+			await tcs.Task;
+
+			// 新しいchatGPTViewに差し替え
+			newView.Visible = true;
+			this.Controls.Remove(oldView);
+			oldView.Dispose();
+			this.chatGPTView = newView;
+		}
+
+		/// <summary>
+		/// chatGPTViewの初期化および再生成時の共通処理
+		/// </summary>
+		/// <param name="webView2"></param>
+		/// <param name="url"></param>
+		private async void InitAndRegenerateCommonProc(WebView2 webView2)
+		{
 			// WebMessageReceivedイベントの追加
-			this.chatGPTView.CoreWebView2.WebMessageReceived += ChatGPTView_WebMessageReceived;
+			webView2.CoreWebView2.WebMessageReceived += ChatGPTView_WebMessageReceived;
 
 			// Enter押下による改行を行う場合
 			if (this.isEnterLineBreakKeep)
 			{
 				// Enter押下による改行有効化のためのJavaScriptコードをchatGPTViewに追加
-				await this.chatGPTView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
+				await webView2.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
 					window.addEventListener('keydown', function(e) {
 					
 						// Enter押下の場合
 						if (e.key === 'Enter' && !e.altKey && !e.shiftKey && !e.ctrlKey) {
-						
 							e.preventDefault();
 							e.stopPropagation();
-							sendMessage = 'enter';
-						
 							chrome.webview.postMessage('enter');
 						}
 					}, true);
 				");
 			}
 
-			// ChatGPTに移動
-			this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
-
 			// 開発者ツール無効化
-			this.chatGPTView.CoreWebView2.Settings.AreDevToolsEnabled = false;
+			webView2.CoreWebView2.Settings.AreDevToolsEnabled = false;
 
 			// ステータスバー表示無効化
-			this.chatGPTView.CoreWebView2.Settings.IsStatusBarEnabled = false;
+			webView2.CoreWebView2.Settings.IsStatusBarEnabled = false;
 
 			// 共有チャット以外のチャット内リンクをクリックしたらデフォルトのブラウザを起動
-			this.chatGPTView.CoreWebView2.NewWindowRequested += this.ChatGPTView_NewWindowRequested;
+			webView2.CoreWebView2.NewWindowRequested += this.ChatGPTView_NewWindowRequested;
+
+			// URL変更時にChatGPTView再生成
+			webView2.CoreWebView2.NavigationStarting += this.ChatGPTView_NavigationStarting;
 		}
 
 		/// <summary>
@@ -646,6 +723,17 @@ namespace ChatGPTBrowser
 					UseShellExecute = true
 				});
 			}
+		}
+
+		/// <summary>
+		/// ChatGPTView_NavigationStartingイベント
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private async void ChatGPTView_NavigationStarting(object sender, CoreWebView2NavigationStartingEventArgs e)
+		{
+			// ChatGPTView再生成
+			await this.ReGenerateChatGPTView();
 		}
 
 		#endregion
