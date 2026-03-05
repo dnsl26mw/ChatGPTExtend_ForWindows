@@ -1,12 +1,12 @@
 ﻿using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.WinForms;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text.Json;
-using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace ChatGPTBrowser
@@ -15,11 +15,14 @@ namespace ChatGPTBrowser
 	{
 		#region フィールド変数
 
+		// 表示サイズおよび表示位置を保持するJSONファイル名
+		private string sizeAndLocationJsonName = "./sizeandlocation.json";
+
 		// 最大化の要否を保持するJSONファイル名
 		private string isMaximizedJsonName = "./ismaximized.json";
 
-		// 表示サイズおよび表示位置を保持するJSONファイル名
-		private string sizeAndLocationJsonName = "./sizeandlocation.json";
+		// Enter押下による改行有効化の要否を保持するJSONファイル名
+		private string isEnterLineBreakJsonName = "./isenterlinebreak.json";
 
 		// JSONでの最大化要否保持用のキー
 		string isMaximizedKey = "maximized";
@@ -42,11 +45,20 @@ namespace ChatGPTBrowser
 		// JSONでの表示サイズWidth保持用のキー
 		string HeightKey = "Height";
 
+		// JSONでのEnter押下による改行有効化の要否保持用のキー
+		string isEnterLineBreakKey = "enterLineBreak";
+
 		// 表示サイズを保持
 		private Size sizeKeep = new Size();
 
 		// 表示位置を保持
 		private Point locationKeep = new Point();
+
+		// Enter押下による改行有効化の要否を保持
+		private bool isEnterLineBreakKeep = false;
+
+		// ユーザデータ
+		private CoreWebView2Environment chatGPTViewEnvironment;
 
 		#endregion
 
@@ -57,14 +69,17 @@ namespace ChatGPTBrowser
 		{
 			InitializeComponent();
 
-			// ChatGPTView初期化
-			InitializeAsync();
+			// Enter押下による改行有効化の要否を設定
+			this.SetEnterLineBreak();
 
 			// 表示サイズおよび表示位置を設定
 			this.SetSizeAndLocation();
 
 			// 最大化要否を設定
 			this.SetMaximized();
+
+			// ChatGPTView初期化
+			this.ChatGPTViewInitialize();
 		}
 
 		#region メソッド
@@ -72,44 +87,123 @@ namespace ChatGPTBrowser
 		/// <summary>
 		/// ChatGPTView初期化
 		/// </summary>
-		private async void InitializeAsync()
+		private async void ChatGPTViewInitialize()
 		{
-			// ChatGPTviewの初期化
-			await this.chatGPTView.EnsureCoreWebView2Async();
+			// ユーザデータ保持
+			this.chatGPTViewEnvironment = await CoreWebView2Environment.CreateAsync(null, Path.Combine(Application.StartupPath, "UserData"));
 
-			// WebMessageReceivedイベントの追加
-			this.chatGPTView.CoreWebView2.WebMessageReceived += ChatGPTView_WebMessageReceived;
+			// chatGPTViewの初期化
+			await this.chatGPTView.EnsureCoreWebView2Async(chatGPTViewEnvironment);
 
-			await this.chatGPTView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
-				window.addEventListener('keydown', function(e) {
-					
-					// Enter押下の場合
-					if (e.key === 'Enter' && !e.altKey && !e.shiftKey && !e.ctrlKey) {
-						
-						e.preventDefault();
-						e.stopPropagation();
-						sendMessage = 'enter';
-						
-						chrome.webview.postMessage('enter');
-					}
-				}, true);
-			");
+			// 初期化および再生成時の共通処理
+			this.InitAndRegenerateCommonProc(this.chatGPTView);
 
 			// ChatGPTに移動
 			this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
-
-			// 開発者ツール無効化
-			this.chatGPTView.CoreWebView2.Settings.AreDevToolsEnabled = false;
-
-			// ステータスバー表示無効化
-			this.chatGPTView.CoreWebView2.Settings.IsStatusBarEnabled = false;
-
-			// 共有チャット以外のチャット内リンクをクリックしたらデフォルトのブラウザを起動
-			this.chatGPTView.CoreWebView2.NewWindowRequested += this.ChatGPTView_NewWindowRequested;
 		}
 
 		/// <summary>
-		/// 表示サイズおよび表示位置を適用
+		/// ChatGPTView再生成
+		/// </summary>
+		/// <returns></returns>
+		private async Task ReGenerateChatGPTView()
+		{
+			// ユーザデータがNULLの場合
+			if (this.chatGPTViewEnvironment == null)
+			{
+				return;
+			}
+
+			// chatGPTViewがNULLの場合
+			if (this.chatGPTView == null)
+			{
+				return;
+			}
+
+			// chatGPTView.CoreWebView2がNULLの場合
+			if (this.chatGPTView.CoreWebView2 == null)
+			{
+				return;
+			}
+
+			// 現在のchatGPTViewを取得
+			var oldView = this.chatGPTView;
+
+			// 現在のURLを取得
+			string url = oldView.CoreWebView2.Source;
+
+			// 新しいchatGPTViewを生成
+			var newView = new WebView2();
+			newView.Dock = DockStyle.Fill;
+			newView.Visible = false;
+			this.Controls.Add(newView);
+
+			// 新しいchatGPTViewのchatGPTView.CoreWebView2の初期化
+			await newView.EnsureCoreWebView2Async(this.chatGPTViewEnvironment);
+
+			// 初期化および再生成時の共通処理
+			this.InitAndRegenerateCommonProc(newView);
+
+			// 新しいchatGPTViewで現在のURLを読み込み
+			newView.CoreWebView2.Navigate(url);
+
+			// ホワイトアウト防止のため、読み込み完了まで待機
+			var tcs = new TaskCompletionSource<bool>();
+			newView.CoreWebView2.NavigationCompleted += (s, e) =>
+			{
+				tcs.TrySetResult(true);
+			};
+			await tcs.Task;
+
+			// 新しいchatGPTViewに差し替え
+			newView.Visible = true;
+			this.Controls.Remove(oldView);
+			oldView.Dispose();
+			this.chatGPTView = newView;
+		}
+
+		/// <summary>
+		/// chatGPTViewの初期化および再生成時の共通処理
+		/// </summary>
+		/// <param name="webView2"></param>
+		/// <param name="url"></param>
+		private async void InitAndRegenerateCommonProc(WebView2 webView2)
+		{
+			// WebMessageReceivedイベントの追加
+			webView2.CoreWebView2.WebMessageReceived += ChatGPTView_WebMessageReceived;
+
+			// Enter押下による改行を行う場合
+			if (this.isEnterLineBreakKeep)
+			{
+				// Enter押下による改行有効化のためのJavaScriptコードをchatGPTViewに追加
+				await webView2.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
+					window.addEventListener('keydown', function(e) {
+					
+						// Enter押下の場合
+						if (e.key === 'Enter' && !e.altKey && !e.shiftKey && !e.ctrlKey) {
+							e.preventDefault();
+							e.stopPropagation();
+							chrome.webview.postMessage('enter');
+						}
+					}, true);
+				");
+			}
+
+			// 開発者ツール無効化
+			webView2.CoreWebView2.Settings.AreDevToolsEnabled = false;
+
+			// ステータスバー表示無効化
+			webView2.CoreWebView2.Settings.IsStatusBarEnabled = false;
+
+			// 共有チャット以外のチャット内リンクをクリックしたらデフォルトのブラウザを起動
+			webView2.CoreWebView2.NewWindowRequested += this.ChatGPTView_NewWindowRequested;
+
+			// URL変更時にChatGPTView再生成
+			webView2.CoreWebView2.NavigationStarting += this.ChatGPTView_NavigationStarting;
+		}
+
+		/// <summary>
+		/// 表示サイズおよび表示位置を設定
 		/// </summary>
 		private void SetSizeAndLocation()
 		{
@@ -277,7 +371,7 @@ namespace ChatGPTBrowser
 			}
 			catch
 			{
-				// JSONファイルが存在しない場合は作成
+				// 表示サイズおよび表示位置を記録するJSONファイルが存在しない場合は作成
 				if (!File.Exists(@sizeAndLocationJsonName))
 				{
 					File.Create(@sizeAndLocationJsonName).Dispose();
@@ -309,8 +403,8 @@ namespace ChatGPTBrowser
 					WriteIndented = true
 				});
 
-				// JSONファイルに書き込み
-				File.WriteAllText(this.sizeAndLocationJsonName, jsonStr);
+				// 表示サイズおよび表示位置を記録するJSONファイルへの書き込み
+				File.WriteAllText(@sizeAndLocationJsonName, jsonStr);
 			}
 		}
 
@@ -341,9 +435,9 @@ namespace ChatGPTBrowser
 			try
 			{
 				// 最大化要否を記録するJSONファイルが存在した場合
-				if (File.Exists(this.isMaximizedJsonName))
+				if (File.Exists(@isMaximizedJsonName))
 				{
-					// JSONの内容を取得
+					// 最大化要否を記録するJSONファイルの内容を取得
 					string json = File.ReadAllText(@isMaximizedJsonName);
 					var data = JsonSerializer.Deserialize<Dictionary<string, bool>>(json);
 
@@ -362,8 +456,8 @@ namespace ChatGPTBrowser
 				}
 				else
 				{
-					// JSONファイルを作成
-					File.Create(this.isMaximizedJsonName).Dispose();
+					// 最大化要否を記録するJSONファイルを作成
+					File.Create(@isMaximizedJsonName).Dispose();
 
 					// 最大化無しを記録
 					this.RecordMaximized(setFlg);
@@ -401,10 +495,10 @@ namespace ChatGPTBrowser
 			catch
 			{
 				// 最大化要否を記録するJSONファイルが存在しない場合
-				if (!File.Exists(this.isMaximizedJsonName))
+				if (!File.Exists(@isMaximizedJsonName))
 				{
-					// JSONファイルを作成
-					File.Create(this.isMaximizedJsonName).Dispose();
+					// 最大化要否を記録するJSONファイルJSONファイルを作成
+					File.Create(@isMaximizedJsonName).Dispose();
 				}
 
 				// 最大化要否を記録
@@ -421,8 +515,8 @@ namespace ChatGPTBrowser
 					WriteIndented = true
 				});
 
-				// JSONファイルに書き込み
-				File.WriteAllText(this.isMaximizedJsonName, jsonStr);
+				// 最大化要否を記録するJSONファイルJSONファイルへの書き込み
+				File.WriteAllText(@isMaximizedJsonName, jsonStr);
 			}
 		}
 
@@ -448,6 +542,92 @@ namespace ChatGPTBrowser
 			{
 				this.sizeKeep = this.Size;
 				this.locationKeep = this.Location;
+			}
+		}
+
+		/// <summary>
+		/// Enter押下による改行有効化の要否の設定
+		/// </summary>
+		private void SetEnterLineBreak()
+		{
+			// Enter押下による改行有効化設定フラグ
+			bool setFlg = false;
+
+			try
+			{
+				// Enter押下による改行有効化設定を記録するJSONファイルが存在しない場合
+				if (!File.Exists(@isEnterLineBreakJsonName))
+				{
+					// Enter押下による改行有効化設定を記録するJSONファイルを作成
+					File.Create(@isEnterLineBreakJsonName).Dispose();
+
+					// Enter押下による改行有効化設定を記録するJSONファイルへの書き込みを行う
+					this.RecordEnterLineBreak(setFlg);
+				}
+
+				// Enter押下による改行有効化設定を記録するJSONの内容を取得
+				string json = File.ReadAllText(@isEnterLineBreakJsonName);
+				var data = JsonSerializer.Deserialize<Dictionary<string, bool>>(json);
+
+				// 保存済みのEnter押下による改行有効化設定
+				setFlg = data[this.isEnterLineBreakKey];
+			}
+			catch
+			{
+				// Enter押下による改行有効化設定を記録するJSONファイルを作成
+				File.Create(@isEnterLineBreakJsonName).Dispose();
+
+				// Enter押下による改行有効化設定を記録するJSONファイルへの書き込みを行う
+				this.RecordEnterLineBreak(setFlg);
+			}
+			finally
+			{
+				// Enter押下による改行要否を設定
+				this.isEnterLineBreakKeep = setFlg;
+			}
+		}
+
+		/// <summary>
+		/// Enter押下による改行要否を記録するJSONファイルへの書き込みを行う
+		/// </summary>
+		private void RecordEnterLineBreak(bool flg)
+		{
+			// Enter押下による改行要否を記録するJSONオブジェクト
+			var jsonObject = new Dictionary<string, bool>();
+
+			try
+			{
+				// Enter押下による改行要否を記録
+				jsonObject = new Dictionary<string, bool>
+				{
+					[this.isEnterLineBreakKey] = flg
+				};
+			}
+			catch
+			{
+				// Enter押下による改行要否を記録するJSONファイルが存在しない場合
+				if (!File.Exists(@isEnterLineBreakJsonName))
+				{
+					// JSONファイルを作成
+					File.Create(@isEnterLineBreakJsonName).Dispose();
+				}
+
+				// Enter押下による改行要否を記録
+				jsonObject = new Dictionary<string, bool>
+				{
+					[this.isEnterLineBreakKey] = flg
+				};
+			}
+			finally
+			{
+				// JSON文字列に変換
+				string jsonStr = JsonSerializer.Serialize(jsonObject, new JsonSerializerOptions
+				{
+					WriteIndented = true
+				});
+
+				// Enter押下による改行要否を記録するJSONファイルへの書き込み
+				File.WriteAllText(@isEnterLineBreakJsonName, jsonStr);
 			}
 		}
 
@@ -543,6 +723,17 @@ namespace ChatGPTBrowser
 					UseShellExecute = true
 				});
 			}
+		}
+
+		/// <summary>
+		/// ChatGPTView_NavigationStartingイベント
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private async void ChatGPTView_NavigationStarting(object sender, CoreWebView2NavigationStartingEventArgs e)
+		{
+			// ChatGPTView再生成
+			await this.ReGenerateChatGPTView();
 		}
 
 		#endregion
