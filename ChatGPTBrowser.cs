@@ -198,7 +198,7 @@ namespace ChatGPTBrowser
 			// 共有チャット以外のチャット内リンクをクリックしたらデフォルトのブラウザを起動
 			webView2.CoreWebView2.NewWindowRequested += this.ChatGPTView_NewWindowRequested;
 
-			// URL変更時にChatGPTView再生成
+			// チャットルーム移動時にChatGPTView再生成
 			webView2.CoreWebView2.NavigationStarting += this.ChatGPTView_NavigationStarting;
 		}
 
@@ -732,8 +732,12 @@ namespace ChatGPTBrowser
 		/// <param name="e"></param>
 		private async void ChatGPTView_NavigationStarting(object sender, CoreWebView2NavigationStartingEventArgs e)
 		{
-			// ChatGPTView再生成
-			await this.ReGenerateChatGPTView();
+			// チャットルーム移動時
+			if (e.Uri.Contains("/c/"))
+			{
+				// ChatGPTView再生成
+				await this.ReGenerateChatGPTView();
+			}
 		}
 
 		#endregion
