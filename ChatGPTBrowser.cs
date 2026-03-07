@@ -90,7 +90,14 @@ namespace ChatGPTBrowser
 		private async void ChatGPTViewInitialize()
 		{
 			// ユーザデータ保持
-			this.chatGPTViewEnvironment = await CoreWebView2Environment.CreateAsync(null, Path.Combine(Application.StartupPath, "UserData"));
+			var options = new CoreWebView2EnvironmentOptions();
+			options.AdditionalBrowserArguments =
+				"--disable-features=msSmartScreenProtection " +
+				"--enable-gpu-rasterization " +
+				"--disable-gpu-shader-disk-cache " +
+				"--disable-background-timer-throttling " +
+				"--process-per-site";
+			this.chatGPTViewEnvironment = await CoreWebView2Environment.CreateAsync(null, "UserData", options);
 
 			// chatGPTViewの初期化
 			await this.chatGPTView.EnsureCoreWebView2Async(chatGPTViewEnvironment);
@@ -170,6 +177,7 @@ namespace ChatGPTBrowser
 		private async void InitAndRegenerateCommonProc(WebView2 webView2)
 		{
 			// WebMessageReceivedイベントの追加
+			webView2.CoreWebView2.WebMessageReceived -= ChatGPTView_WebMessageReceived;
 			webView2.CoreWebView2.WebMessageReceived += ChatGPTView_WebMessageReceived;
 
 			// Enter押下による改行を行う場合
@@ -177,17 +185,58 @@ namespace ChatGPTBrowser
 			{
 				// Enter押下による改行有効化のためのJavaScriptコードをchatGPTViewに追加
 				await webView2.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
+
+					// キー押下イベントのリスナーを追加
 					window.addEventListener('keydown', function(e) {
 					
 						// Enter押下の場合
 						if (e.key === 'Enter' && !e.altKey && !e.shiftKey && !e.ctrlKey) {
+
+							// デフォルトのEnter押下動作を無効化
 							e.preventDefault();
+
+							// キー押下メッセージを送信
 							e.stopPropagation();
+
+							// C#側にEnter押下を通知
 							chrome.webview.postMessage('enter');
 						}
 					}, true);
 				");
 			}
+
+			// DOM削除のためのJavaScriptコードをchatGPTViewに追加
+			await webView2.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
+
+				// DOMContentLoadedイベントのリスナーを追加
+				window.addEventListener('DOMContentLoaded', () => {
+
+					// DOMの変化を監視するMutationObserverを作成
+					const observer = new MutationObserver(() => {
+
+						// DOM内容を取得
+						const messages = document.querySelectorAll('[data-message-author-role]');
+
+						// メッセージが120件を超えている場合は古いメッセージから削除
+						if (messages.length > 120) {
+							for (let i = 0; i < messages.length - 120; i++) {
+								messages[i].remove();
+							}
+						}
+					});
+
+					// DOMの変化を監視
+					observer.observe(document.body, {
+
+						// 子ノードの追加と削除を監視
+						childList: true,
+
+						// サブツリー全体の変化を監視
+						subtree: true	
+					});	
+					
+				});
+			");
 
 			// 開発者ツール無効化
 			webView2.CoreWebView2.Settings.AreDevToolsEnabled = false;
@@ -195,10 +244,21 @@ namespace ChatGPTBrowser
 			// ステータスバー表示無効化
 			webView2.CoreWebView2.Settings.IsStatusBarEnabled = false;
 
+			// デフォルトの右クリックメニュー無効化
+			webView2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+
+			// ズームコントロール無効化
+			webView2.CoreWebView2.Settings.IsZoomControlEnabled = false;
+
+			// 組み込みエラーページ無効化
+			webView2.CoreWebView2.Settings.IsBuiltInErrorPageEnabled = false;
+
 			// 共有チャット以外のチャット内リンクをクリックしたらデフォルトのブラウザを起動
+			webView2.CoreWebView2.NewWindowRequested -= this.ChatGPTView_NewWindowRequested;
 			webView2.CoreWebView2.NewWindowRequested += this.ChatGPTView_NewWindowRequested;
 
 			// チャットルーム移動時にChatGPTView再生成
+			webView2.CoreWebView2.NavigationStarting -= this.ChatGPTView_NavigationStarting;
 			webView2.CoreWebView2.NavigationStarting += this.ChatGPTView_NavigationStarting;
 		}
 
