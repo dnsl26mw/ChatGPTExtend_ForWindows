@@ -8,6 +8,7 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
 namespace ChatGPTBrowser
 {
@@ -60,6 +61,13 @@ namespace ChatGPTBrowser
 		// ユーザデータ
 		private CoreWebView2Environment chatGPTViewEnvironment;
 
+		[DllImport("dwmapi.dll")]
+		// タイトルバーの色をダークモード/ライトモードに合わせて変更するためのWin32API
+		private static extern int DwmSetWindowAttribute(IntPtr hwnd, int dwAttribute, ref int pvAttribute, int cbAttribute);
+
+		// ダークモード/ライトモードに合わせたタイトルバーの色変更のための定数
+		private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+
 		#endregion
 
 		/// <summary>
@@ -80,6 +88,15 @@ namespace ChatGPTBrowser
 
 			// ChatGPTView初期化
 			this.ChatGPTViewInitialize();
+
+			// 起動時にダークモード/ライトモードに合わせて色を変更
+			this.SetColorMode();
+
+			// 起動中にダークモード/ライトモードの変更を検知して色を変更
+			Microsoft.Win32.SystemEvents.UserPreferenceChanged += (s, e) =>
+			{
+				this.SetColorMode();
+			};
 		}
 
 		#region メソッド
@@ -96,14 +113,18 @@ namespace ChatGPTBrowser
 				"--enable-gpu-rasterization " +
 				"--disable-gpu-shader-disk-cache " +
 				"--disable-background-timer-throttling " +
-				"--process-per-site";
+				"--process-per-site" +
+				"--enable - features = OverlayScrollbar" +
+				"--disable - features = CalculateNativeWinOcclusion" +
+				"--enable-zero-copy " +
+				"--enable-gpu-memory-buffer-video-frames";
 			this.chatGPTViewEnvironment = await CoreWebView2Environment.CreateAsync(null, "UserData", options);
 
 			// chatGPTViewの初期化
 			await this.chatGPTView.EnsureCoreWebView2Async(chatGPTViewEnvironment);
 
 			// 初期化および再生成時の共通処理
-			this.InitAndRegenerateCommonProc(this.chatGPTView);
+			await this.InitAndRegenerateCommonProc(this.chatGPTView);
 
 			// ChatGPTに移動
 			this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
@@ -149,7 +170,7 @@ namespace ChatGPTBrowser
 			await newView.EnsureCoreWebView2Async(this.chatGPTViewEnvironment);
 
 			// 初期化および再生成時の共通処理
-			this.InitAndRegenerateCommonProc(newView);
+			await this.InitAndRegenerateCommonProc(newView);
 
 			// 新しいchatGPTViewで現在のURLを読み込み
 			newView.CoreWebView2.Navigate(url);
@@ -174,7 +195,7 @@ namespace ChatGPTBrowser
 		/// </summary>
 		/// <param name="webView2"></param>
 		/// <param name="url"></param>
-		private async void InitAndRegenerateCommonProc(WebView2 webView2)
+		private async Task InitAndRegenerateCommonProc(WebView2 webView2)
 		{
 			// WebMessageReceivedイベントの追加
 			webView2.CoreWebView2.WebMessageReceived -= ChatGPTView_WebMessageReceived;
@@ -688,6 +709,76 @@ namespace ChatGPTBrowser
 
 				// Enter押下による改行要否を記録するJSONファイルへの書き込み
 				File.WriteAllText(@isEnterLineBreakJsonName, jsonStr);
+			}
+		}
+
+		/// <summary>
+		/// ダークモード/ライトモードに合わせて色を設定
+		/// </summary>
+		private void SetColorMode()
+		{
+			// ダークモード/ライトモードを取得
+			int useDarkMode = IsDarkMode() ? 1 : 0;
+
+			// ダークモードの場合
+			if (useDarkMode == 1)
+			{
+				// フォームの背景色をダークモードに合わせる
+				this.BackColor = Color.FromArgb(32, 32, 32);
+
+				// chatGPTViewの背景色をダークモードに合わせる
+				this.chatGPTView.DefaultBackgroundColor = Color.FromArgb(32, 32, 32);
+			}
+			// ダークモードではない場合
+			else
+			{
+				// フォームの背景色をライトモードに合わせる
+				this.BackColor = Color.FromArgb(255, 255, 255);
+
+				// chatGPTViewの背景色をライトモードに合わせる
+				this.chatGPTView.DefaultBackgroundColor = Color.FromArgb(255, 255, 255);
+			}
+
+			// タイトルバーの色をダークモード/ライトモードに合わせる
+			DwmSetWindowAttribute(this.Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref useDarkMode, sizeof(int));
+		}
+
+		/// <summary>
+		///  ダークモード/ライトモードを判定
+		/// </summary>
+		/// <returns></returns>
+		private bool IsDarkMode()
+		{
+			// レジストリからダークモード/ライトモードの設定を取得
+			using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+				@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"))
+			{
+				// レジストリキーが存在しない場合はライトモードとする
+				if (key == null)
+				{
+					return false;
+				}
+
+				// AppsUseLightThemeの値を取得
+				object appUseLightTheme = key?.GetValue("AppsUseLightTheme");
+
+				// SystemUseLightThemeの値を取得
+				object systemUseLightTheme = key?.GetValue("SystemUseLightTheme");
+
+				// AppsUseLightThemeの値が0の場合はダークモード、1の場合はライトモード
+				if (appUseLightTheme is int appUseLightThemeValue)
+				{
+					return appUseLightThemeValue == 0;
+				}
+
+				// SystemUseLightThemeの値が0の場合はダークモード、1の場合はライトモード
+				if (appUseLightTheme is int systemUseLightThemeValue)
+				{
+					return systemUseLightThemeValue == 0;
+				}
+
+				// どちらの値も取得できない場合はライトモードとする
+				return false;
 			}
 		}
 

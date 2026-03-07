@@ -1,4 +1,6 @@
-﻿namespace ChatGPTBrowser
+﻿using System.Windows.Forms;
+
+namespace ChatGPTBrowser
 {
 	partial class ChatGPTBrowser
 	{
@@ -79,6 +81,8 @@
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ChatGPTBrowser_FormClosing);
 			this.SizeChanged += new System.EventHandler(this.ChatGPTBrowser_SizeChanged);
 			this.Move += new System.EventHandler(this.ChatGPTBrowser_Move);
+			this.Padding = new Padding(0);
+			this.chatGPTView.Margin = new Padding(0);
 			((System.ComponentModel.ISupportInitialize)(this.chatGPTView)).EndInit();
 			this.ResumeLayout(false);
 
