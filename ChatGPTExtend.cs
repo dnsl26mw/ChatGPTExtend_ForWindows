@@ -8,10 +8,11 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
-namespace ChatGPTBrowser
+namespace ChatGPTExtend
 {
-	public partial class ChatGPTBrowser : Form
+	public partial class ChatGPTExtend : Form
 	{
 		#region フィールド変数
 
@@ -60,12 +61,19 @@ namespace ChatGPTBrowser
 		// ユーザデータ
 		private CoreWebView2Environment chatGPTViewEnvironment;
 
+		[DllImport("dwmapi.dll")]
+		// タイトルバーの色をダークモード/ライトモードに合わせて変更するためのWin32API
+		private static extern int DwmSetWindowAttribute(IntPtr hwnd, int dwAttribute, ref int pvAttribute, int cbAttribute);
+
+		// ダークモード/ライトモードに合わせたタイトルバーの色変更のための定数
+		private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+
 		#endregion
 
 		/// <summary>
 		/// コンストラクタ
 		/// </summary>
-		public ChatGPTBrowser()
+		public ChatGPTExtend()
 		{
 			InitializeComponent();
 
@@ -80,6 +88,15 @@ namespace ChatGPTBrowser
 
 			// ChatGPTView初期化
 			this.ChatGPTViewInitialize();
+
+			// 起動時にダークモード/ライトモードに合わせて色を変更
+			this.SetColorMode();
+
+			// 起動中にダークモード/ライトモードの変更を検知して色を変更
+			Microsoft.Win32.SystemEvents.UserPreferenceChanged += (s, e) =>
+			{
+				this.SetColorMode();
+			};
 		}
 
 		#region メソッド
@@ -90,13 +107,24 @@ namespace ChatGPTBrowser
 		private async void ChatGPTViewInitialize()
 		{
 			// ユーザデータ保持
-			this.chatGPTViewEnvironment = await CoreWebView2Environment.CreateAsync(null, Path.Combine(Application.StartupPath, "UserData"));
+			var options = new CoreWebView2EnvironmentOptions();
+			options.AdditionalBrowserArguments =
+				"--disable-features=msSmartScreenProtection " +
+				"--enable-gpu-rasterization " +
+				"--disable-gpu-shader-disk-cache " +
+				"--disable-background-timer-throttling " +
+				"--process-per-site" +
+				"--enable - features = OverlayScrollbar" +
+				"--disable - features = CalculateNativeWinOcclusion" +
+				"--enable-zero-copy " +
+				"--enable-gpu-memory-buffer-video-frames";
+			this.chatGPTViewEnvironment = await CoreWebView2Environment.CreateAsync(null, "UserData", options);
 
 			// chatGPTViewの初期化
 			await this.chatGPTView.EnsureCoreWebView2Async(chatGPTViewEnvironment);
 
 			// 初期化および再生成時の共通処理
-			this.InitAndRegenerateCommonProc(this.chatGPTView);
+			await this.InitAndRegenerateCommonProc(this.chatGPTView);
 
 			// ChatGPTに移動
 			this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
@@ -142,7 +170,7 @@ namespace ChatGPTBrowser
 			await newView.EnsureCoreWebView2Async(this.chatGPTViewEnvironment);
 
 			// 初期化および再生成時の共通処理
-			this.InitAndRegenerateCommonProc(newView);
+			await this.InitAndRegenerateCommonProc(newView);
 
 			// 新しいchatGPTViewで現在のURLを読み込み
 			newView.CoreWebView2.Navigate(url);
@@ -167,9 +195,10 @@ namespace ChatGPTBrowser
 		/// </summary>
 		/// <param name="webView2"></param>
 		/// <param name="url"></param>
-		private async void InitAndRegenerateCommonProc(WebView2 webView2)
+		private async Task InitAndRegenerateCommonProc(WebView2 webView2)
 		{
 			// WebMessageReceivedイベントの追加
+			webView2.CoreWebView2.WebMessageReceived -= ChatGPTView_WebMessageReceived;
 			webView2.CoreWebView2.WebMessageReceived += ChatGPTView_WebMessageReceived;
 
 			// Enter押下による改行を行う場合
@@ -177,17 +206,58 @@ namespace ChatGPTBrowser
 			{
 				// Enter押下による改行有効化のためのJavaScriptコードをchatGPTViewに追加
 				await webView2.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
+
+					// キー押下イベントのリスナーを追加
 					window.addEventListener('keydown', function(e) {
 					
 						// Enter押下の場合
 						if (e.key === 'Enter' && !e.altKey && !e.shiftKey && !e.ctrlKey) {
+
+							// デフォルトのEnter押下動作を無効化
 							e.preventDefault();
+
+							// キー押下メッセージを送信
 							e.stopPropagation();
+
+							// C#側にEnter押下を通知
 							chrome.webview.postMessage('enter');
 						}
 					}, true);
 				");
 			}
+
+			// DOM削除のためのJavaScriptコードをchatGPTViewに追加
+			await webView2.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
+
+				// DOMContentLoadedイベントのリスナーを追加
+				window.addEventListener('DOMContentLoaded', () => {
+
+					// DOMの変化を監視するMutationObserverを作成
+					const observer = new MutationObserver(() => {
+
+						// DOM内容を取得
+						const messages = document.querySelectorAll('[data-message-author-role]');
+
+						// メッセージが120件を超えている場合は古いメッセージから削除
+						if (messages.length > 120) {
+							for (let i = 0; i < messages.length - 120; i++) {
+								messages[i].remove();
+							}
+						}
+					});
+
+					// DOMの変化を監視
+					observer.observe(document.body, {
+
+						// 子ノードの追加と削除を監視
+						childList: true,
+
+						// サブツリー全体の変化を監視
+						subtree: true	
+					});	
+					
+				});
+			");
 
 			// 開発者ツール無効化
 			webView2.CoreWebView2.Settings.AreDevToolsEnabled = false;
@@ -195,10 +265,21 @@ namespace ChatGPTBrowser
 			// ステータスバー表示無効化
 			webView2.CoreWebView2.Settings.IsStatusBarEnabled = false;
 
+			// デフォルトの右クリックメニュー無効化
+			webView2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+
+			// ズームコントロール無効化
+			webView2.CoreWebView2.Settings.IsZoomControlEnabled = false;
+
+			// 組み込みエラーページ無効化
+			webView2.CoreWebView2.Settings.IsBuiltInErrorPageEnabled = false;
+
 			// 共有チャット以外のチャット内リンクをクリックしたらデフォルトのブラウザを起動
+			webView2.CoreWebView2.NewWindowRequested -= this.ChatGPTView_NewWindowRequested;
 			webView2.CoreWebView2.NewWindowRequested += this.ChatGPTView_NewWindowRequested;
 
-			// URL変更時にChatGPTView再生成
+			// チャットルーム移動時にChatGPTView再生成
+			webView2.CoreWebView2.NavigationStarting -= this.ChatGPTView_NavigationStarting;
 			webView2.CoreWebView2.NavigationStarting += this.ChatGPTView_NavigationStarting;
 		}
 
@@ -631,6 +712,76 @@ namespace ChatGPTBrowser
 			}
 		}
 
+		/// <summary>
+		/// ダークモード/ライトモードに合わせて色を設定
+		/// </summary>
+		private void SetColorMode()
+		{
+			// ダークモード/ライトモードを取得
+			int useDarkMode = IsDarkMode() ? 1 : 0;
+
+			// ダークモードの場合
+			if (useDarkMode == 1)
+			{
+				// フォームの背景色をダークモードに合わせる
+				this.BackColor = Color.FromArgb(32, 32, 32);
+
+				// chatGPTViewの背景色をダークモードに合わせる
+				this.chatGPTView.DefaultBackgroundColor = Color.FromArgb(32, 32, 32);
+			}
+			// ダークモードではない場合
+			else
+			{
+				// フォームの背景色をライトモードに合わせる
+				this.BackColor = Color.FromArgb(255, 255, 255);
+
+				// chatGPTViewの背景色をライトモードに合わせる
+				this.chatGPTView.DefaultBackgroundColor = Color.FromArgb(255, 255, 255);
+			}
+
+			// タイトルバーの色をダークモード/ライトモードに合わせる
+			DwmSetWindowAttribute(this.Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref useDarkMode, sizeof(int));
+		}
+
+		/// <summary>
+		///  ダークモード/ライトモードを判定
+		/// </summary>
+		/// <returns></returns>
+		private bool IsDarkMode()
+		{
+			// レジストリからダークモード/ライトモードの設定を取得
+			using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+				@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"))
+			{
+				// レジストリキーが存在しない場合はライトモードとする
+				if (key == null)
+				{
+					return false;
+				}
+
+				// AppsUseLightThemeの値を取得
+				object appUseLightTheme = key?.GetValue("AppsUseLightTheme");
+
+				// SystemUseLightThemeの値を取得
+				object systemUseLightTheme = key?.GetValue("SystemUseLightTheme");
+
+				// AppsUseLightThemeの値が0の場合はダークモード、1の場合はライトモード
+				if (appUseLightTheme is int appUseLightThemeValue)
+				{
+					return appUseLightThemeValue == 0;
+				}
+
+				// SystemUseLightThemeの値が0の場合はダークモード、1の場合はライトモード
+				if (appUseLightTheme is int systemUseLightThemeValue)
+				{
+					return systemUseLightThemeValue == 0;
+				}
+
+				// どちらの値も取得できない場合はライトモードとする
+				return false;
+			}
+		}
+
 		#endregion
 
 		#region イベント
@@ -654,44 +805,44 @@ namespace ChatGPTBrowser
 		}
 
 		/// <summary>
-		/// ChatGPTBrowser_Deactiveイベント
+		/// ChatGPTExtend_Deactiveイベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
-		private void ChatGPTBrowser_Deactive(object sender, EventArgs e)
+		private void ChatGPTExtend_Deactive(object sender, EventArgs e)
 		{
 			// DeactiveイベントおよびClosingイベント共通処理
 			this.DeactiveAndClosing();
 		}
 
 		/// <summary>
-		/// ChatGPTBrowser_FormClosingイベント
+		/// ChatGPTExtend_FormClosingイベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
-		private void ChatGPTBrowser_FormClosing(object sender, FormClosingEventArgs e)
+		private void ChatGPTExtend_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			// DeactiveイベントおよびClosingイベント共通処理
 			this.DeactiveAndClosing();
 		}
 
 		/// <summary>
-		/// ChatGPTBrowser_フォーム移動イベント
+		/// ChatGPTExtend_フォーム移動イベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
-		private void ChatGPTBrowser_Move(object sender, EventArgs e)
+		private void ChatGPTExtend_Move(object sender, EventArgs e)
 		{
 			// フォーム移動イベントおよびサイズ変更イベント共通処理
 			this.MoveAndSizeChanged();
 		}
 
 		/// <summary>
-		/// ChatGPTBrowserサイズ変更イベント
+		/// ChatGPTExtendサイズ変更イベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
-		private void ChatGPTBrowser_SizeChanged(object sender, EventArgs e)
+		private void ChatGPTExtend_SizeChanged(object sender, EventArgs e)
 		{
 			// フォーム移動イベントおよびサイズ変更イベント共通処理
 			this.MoveAndSizeChanged();
@@ -732,8 +883,12 @@ namespace ChatGPTBrowser
 		/// <param name="e"></param>
 		private async void ChatGPTView_NavigationStarting(object sender, CoreWebView2NavigationStartingEventArgs e)
 		{
-			// ChatGPTView再生成
-			await this.ReGenerateChatGPTView();
+			// チャットルーム移動時
+			if (e.Uri.Contains("/c/"))
+			{
+				// ChatGPTView再生成
+				await this.ReGenerateChatGPTView();
+			}
 		}
 
 		#endregion

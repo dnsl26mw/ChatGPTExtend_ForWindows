@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{B788FC33-8E59-4011-BA1C-90D94B522F20}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>ChatGPTBrowser</RootNamespace>
-    <AssemblyName>ChatGPTBrowser</AssemblyName>
+    <RootNamespace>ChatGPTextend</RootNamespace>
+    <AssemblyName>ChatGPTExtend</AssemblyName>
     <TargetFrameworkVersion>v4.8.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -111,16 +111,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ChatGPTBrowser.cs">
+    <Compile Include="ChatGPTExtend.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ChatGPTBrowser.Designer.cs">
-      <DependentUpon>ChatGPTBrowser.cs</DependentUpon>
+    <Compile Include="ChatGPTExtend.Designer.cs">
+      <DependentUpon>ChatGPTExtend.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="ChatGPTBrowser.resx">
-      <DependentUpon>ChatGPTBrowser.cs</DependentUpon>
+    <EmbeddedResource Include="ChatGPTExtend.resx">
+      <DependentUpon>ChatGPTExtend.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
