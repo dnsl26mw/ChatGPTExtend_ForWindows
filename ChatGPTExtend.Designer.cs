@@ -33,7 +33,6 @@ namespace ChatGPTExtend
 			this.components = new System.ComponentModel.Container();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChatGPTExtend));
 			this.chatGPTView = new Microsoft.Web.WebView2.WinForms.WebView2();
-			this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
 			this.chatGPTViewContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
 			((System.ComponentModel.ISupportInitialize)(this.chatGPTView)).BeginInit();
 			this.SuspendLayout();
@@ -51,13 +50,6 @@ namespace ChatGPTExtend
 			this.chatGPTView.Size = new System.Drawing.Size(1262, 679);
 			this.chatGPTView.TabIndex = 0;
 			this.chatGPTView.ZoomFactor = 1D;
-			// 
-			// notifyIcon
-			// 
-			this.notifyIcon.ContextMenuStrip = this.chatGPTViewContextMenu;
-			this.notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon.Icon")));
-			this.notifyIcon.Text = "ChatGPTExtend";
-			this.notifyIcon.Visible = true;
 			// 
 			// chatGPTViewContextMenu
 			// 
@@ -91,7 +83,6 @@ namespace ChatGPTExtend
 		#endregion
 
 		private Microsoft.Web.WebView2.WinForms.WebView2 chatGPTView;
-		private System.Windows.Forms.NotifyIcon notifyIcon;
 		private System.Windows.Forms.ContextMenuStrip chatGPTViewContextMenu;
 	}
 }
