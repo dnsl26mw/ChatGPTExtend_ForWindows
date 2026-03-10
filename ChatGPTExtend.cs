@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 
-namespace ChatGPTBrowser
+namespace ChatGPTExtend
 {
-	public partial class ChatGPTBrowser : Form
+	public partial class ChatGPTExtend : Form
 	{
 		#region フィールド変数
 
@@ -73,7 +73,7 @@ namespace ChatGPTBrowser
 		/// <summary>
 		/// コンストラクタ
 		/// </summary>
-		public ChatGPTBrowser()
+		public ChatGPTExtend()
 		{
 			InitializeComponent();
 
@@ -805,44 +805,44 @@ namespace ChatGPTBrowser
 		}
 
 		/// <summary>
-		/// ChatGPTBrowser_Deactiveイベント
+		/// ChatGPTExtend_Deactiveイベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
-		private void ChatGPTBrowser_Deactive(object sender, EventArgs e)
+		private void ChatGPTExtend_Deactive(object sender, EventArgs e)
 		{
 			// DeactiveイベントおよびClosingイベント共通処理
 			this.DeactiveAndClosing();
 		}
 
 		/// <summary>
-		/// ChatGPTBrowser_FormClosingイベント
+		/// ChatGPTExtend_FormClosingイベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
-		private void ChatGPTBrowser_FormClosing(object sender, FormClosingEventArgs e)
+		private void ChatGPTExtend_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			// DeactiveイベントおよびClosingイベント共通処理
 			this.DeactiveAndClosing();
 		}
 
 		/// <summary>
-		/// ChatGPTBrowser_フォーム移動イベント
+		/// ChatGPTExtend_フォーム移動イベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
-		private void ChatGPTBrowser_Move(object sender, EventArgs e)
+		private void ChatGPTExtend_Move(object sender, EventArgs e)
 		{
 			// フォーム移動イベントおよびサイズ変更イベント共通処理
 			this.MoveAndSizeChanged();
 		}
 
 		/// <summary>
-		/// ChatGPTBrowserサイズ変更イベント
+		/// ChatGPTExtendサイズ変更イベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
-		private void ChatGPTBrowser_SizeChanged(object sender, EventArgs e)
+		private void ChatGPTExtend_SizeChanged(object sender, EventArgs e)
 		{
 			// フォーム移動イベントおよびサイズ変更イベント共通処理
 			this.MoveAndSizeChanged();

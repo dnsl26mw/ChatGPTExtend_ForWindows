@@ -1,8 +1,8 @@
 ﻿using System.Windows.Forms;
 
-namespace ChatGPTBrowser
+namespace ChatGPTExtend
 {
-	partial class ChatGPTBrowser
+	partial class ChatGPTExtend
 	{
 		/// <summary>
 		/// 必要なデザイナー変数です。
@@ -31,7 +31,7 @@ namespace ChatGPTBrowser
 		private void InitializeComponent()
 		{
 			this.components = new System.ComponentModel.Container();
-			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChatGPTBrowser));
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChatGPTExtend));
 			this.chatGPTView = new Microsoft.Web.WebView2.WinForms.WebView2();
 			this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
 			this.chatGPTViewContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -56,16 +56,16 @@ namespace ChatGPTBrowser
 			// 
 			this.notifyIcon.ContextMenuStrip = this.chatGPTViewContextMenu;
 			this.notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon.Icon")));
-			this.notifyIcon.Text = "ChatGPTBrowser";
+			this.notifyIcon.Text = "ChatGPTExtend";
 			this.notifyIcon.Visible = true;
 			// 
 			// chatGPTViewContextMenu
 			// 
 			this.chatGPTViewContextMenu.Name = "chatGPTViewContextMenu";
 			this.chatGPTViewContextMenu.Size = new System.Drawing.Size(61, 4);
-			this.chatGPTViewContextMenu.Text = "ChatGPTBrowser";
+			this.chatGPTViewContextMenu.Text = "ChatGPTExtend";
 			// 
-			// ChatGPTBrowser
+			// ChatGPTExtend
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -73,14 +73,14 @@ namespace ChatGPTBrowser
 			this.Controls.Add(this.chatGPTView);
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.KeyPreview = true;
-			this.MinimumSize = new System.Drawing.Size(800, 600);
-			this.Name = "ChatGPTBrowser";
+			this.MinimumSize = new System.Drawing.Size(500,700);
+			this.Name = "ChatGPTExtend";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
-			this.Text = "ChatGPTBrowser";
-			this.Deactivate += new System.EventHandler(this.ChatGPTBrowser_Deactive);
-			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ChatGPTBrowser_FormClosing);
-			this.SizeChanged += new System.EventHandler(this.ChatGPTBrowser_SizeChanged);
-			this.Move += new System.EventHandler(this.ChatGPTBrowser_Move);
+			this.Text = "ChatGPTExtend";
+			this.Deactivate += new System.EventHandler(this.ChatGPTExtend_Deactive);
+			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ChatGPTExtend_FormClosing);
+			this.SizeChanged += new System.EventHandler(this.ChatGPTExtend_SizeChanged);
+			this.Move += new System.EventHandler(this.ChatGPTExtend_Move);
 			this.Padding = new Padding(0);
 			this.chatGPTView.Margin = new Padding(0);
 			((System.ComponentModel.ISupportInitialize)(this.chatGPTView)).EndInit();
