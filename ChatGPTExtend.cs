@@ -272,9 +272,6 @@ namespace ChatGPTExtend
 			// ズームコントロール無効化
 			webView2.CoreWebView2.Settings.IsZoomControlEnabled = false;
 
-			// 組み込みエラーページ無効化
-			webView2.CoreWebView2.Settings.IsBuiltInErrorPageEnabled = false;
-
 			// 共有チャット以外のチャット内リンクをクリックしたらデフォルトのブラウザを起動
 			webView2.CoreWebView2.NewWindowRequested -= this.ChatGPTView_NewWindowRequested;
 			webView2.CoreWebView2.NewWindowRequested += this.ChatGPTView_NewWindowRequested;
