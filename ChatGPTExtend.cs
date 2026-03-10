@@ -99,6 +99,7 @@ namespace ChatGPTExtend
 			};
 		}
 
+
 		#region メソッド
 
 		/// <summary>
