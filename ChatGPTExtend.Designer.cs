@@ -45,9 +45,9 @@ namespace ChatGPTExtend
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.chatGPTView.CreationProperties = null;
 			this.chatGPTView.DefaultBackgroundColor = System.Drawing.Color.White;
-			this.chatGPTView.Location = new System.Drawing.Point(1, 1);
+			this.chatGPTView.Location = new System.Drawing.Point(0, 0);
 			this.chatGPTView.Name = "chatGPTView";
-			this.chatGPTView.Size = new System.Drawing.Size(1262, 679);
+			this.chatGPTView.Size = new System.Drawing.Size(1264, 681);
 			this.chatGPTView.TabIndex = 0;
 			this.chatGPTView.ZoomFactor = 1D;
 			// 
