@@ -46,6 +46,7 @@ namespace ChatGPTExtend
 			this.chatGPTView.CreationProperties = null;
 			this.chatGPTView.DefaultBackgroundColor = System.Drawing.Color.White;
 			this.chatGPTView.Location = new System.Drawing.Point(0, 0);
+			this.chatGPTView.Margin = new System.Windows.Forms.Padding(0);
 			this.chatGPTView.Name = "chatGPTView";
 			this.chatGPTView.Size = new System.Drawing.Size(1264, 681);
 			this.chatGPTView.TabIndex = 0;
@@ -65,7 +66,7 @@ namespace ChatGPTExtend
 			this.Controls.Add(this.chatGPTView);
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.KeyPreview = true;
-			this.MinimumSize = new System.Drawing.Size(500,700);
+			this.MinimumSize = new System.Drawing.Size(500, 700);
 			this.Name = "ChatGPTExtend";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
 			this.Text = "ChatGPTExtend";
@@ -73,8 +74,6 @@ namespace ChatGPTExtend
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ChatGPTExtend_FormClosing);
 			this.SizeChanged += new System.EventHandler(this.ChatGPTExtend_SizeChanged);
 			this.Move += new System.EventHandler(this.ChatGPTExtend_Move);
-			this.Padding = new Padding(0);
-			this.chatGPTView.Margin = new Padding(0);
 			((System.ComponentModel.ISupportInitialize)(this.chatGPTView)).EndInit();
 			this.ResumeLayout(false);
 

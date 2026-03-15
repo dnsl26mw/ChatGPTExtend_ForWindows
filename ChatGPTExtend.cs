@@ -9,6 +9,8 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace ChatGPTExtend
 {
@@ -16,47 +18,53 @@ namespace ChatGPTExtend
 	{
 		#region フィールド変数
 
-		// 表示サイズおよび表示位置を保持するJSONファイル名
-		private string sizeAndLocationJsonName = "./sizeandlocation.json";
+		// 設定保持JSONファイル名
+		private string settingsJsonName = "./Settings.json";
 
-		// 最大化の要否を保持するJSONファイル名
-		private string isMaximizedJsonName = "./ismaximized.json";
+		// 設定保持JSONファイルのEnter押下による改行有効化の要否保持用のキー
+		string enterLineBreakKey = "EnterLineBreak";
 
-		// Enter押下による改行有効化の要否を保持するJSONファイル名
-		private string isEnterLineBreakJsonName = "./isenterlinebreak.json";
+		// 設定保持JSONファイルの前回のチャットルームを再開の要否保持用のキー
+		string isChatRoomLeftOffKey = "ChatRoomLeftOff";
 
-		// JSONでの最大化要否保持用のキー
-		string isMaximizedKey = "maximized";
+		// 設定保持JSONファイルの前回のチャットルームURL保持用のキー
+		string lastTimeChatRoomUrlKey = "LastTimeChatRoomUrl";
 
-		// JSONでの表示位置保持用のキー
+		// 設定保持JSONファイルの表示位置保持用のキー
 		string locationKey = "Location";
 
-		// JSONでの表示サイズ保持用のキー
-		string sizeKey = "Size";
-
-		// JSONでの表示位置X座標保持用のキー
+		// 設定保持JSONファイルの表示位置X座標保持用のキー
 		string XKey = "X";
 
-		// JSONでの表示位置Y座標保持用のキー
+		// 設定保持JSONファイルの表示位置Y座標保持用のキー
 		string YKey = "Y";
 
-		// JSONでの表示サイズWidth保持用のキー
+		// 設定保持JSONファイルの表示サイズ保持用のキー
+		string sizeKey = "Size";
+
+		// 設定保持JSONファイルの表示サイズWidth保持用のキー
 		string WidthKey = "Width";
 
-		// JSONでの表示サイズWidth保持用のキー
+		// 設定保持JSONファイルの表示サイズWidth保持用のキー
 		string HeightKey = "Height";
 
-		// JSONでのEnter押下による改行有効化の要否保持用のキー
-		string isEnterLineBreakKey = "enterLineBreak";
+		// 設定保持JSONファイルの最大化要否保持用のキー
+		string isMaximizedKey = "Maximized";
 
-		// 表示サイズを保持
-		private Size sizeKeep = new Size();
+		// Enter押下による改行の要否を保持
+		private bool isEnterLineBreakKeep = false;
+
+		// 前回のチャットルームの再開の要否を保持
+		private bool isChatRoomLeftOffKeep = false;
+
+		// 前回のチャットルームURLを保持
+		private string lastTimeChatRoomUrl = string.Empty;
 
 		// 表示位置を保持
 		private Point locationKeep = new Point();
 
-		// Enter押下による改行有効化の要否を保持
-		private bool isEnterLineBreakKeep = false;
+		// 表示サイズを保持
+		private Size sizeKeep = new Size();
 
 		// ユーザデータ
 		private CoreWebView2Environment chatGPTViewEnvironment;
@@ -77,14 +85,11 @@ namespace ChatGPTExtend
 		{
 			InitializeComponent();
 
-			// Enter押下による改行有効化の要否を設定
-			this.SetEnterLineBreak();
+			// デフォルト表示位置を画面中央に設定
+			this.CenterToScreen();
 
-			// 表示サイズおよび表示位置を設定
-			this.SetSizeAndLocation();
-
-			// 最大化要否を設定
-			this.SetMaximized();
+			// 設定の読み込みおよび適用
+			this.ReanSettingsJson();
 
 			// ChatGPTView初期化
 			this.ChatGPTViewInitialize();
@@ -101,6 +106,265 @@ namespace ChatGPTExtend
 
 
 		#region メソッド
+
+		/// <summary>
+		/// 設定JSONファイルの読み込み
+		/// </summary>
+		private void ReanSettingsJson()
+		{
+			try
+			{
+				// 設定JSONファイルが存在しない場合
+				if (!File.Exists(@settingsJsonName))
+				{
+					// 設定保持用JSONファイル作成
+					this.CreateSettingsJson();
+					return;
+				}
+
+				// 設定JSONファイルの内容を取得
+				string json = File.ReadAllText(@settingsJsonName);
+				var data = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
+
+				// Enter押下による改行の要否の読み込み
+				bool enterLineBreak = data[this.enterLineBreakKey].GetBoolean();
+
+				// 前回のチャットルームを再開の要否の読み込み
+				bool chatRoomLeftOff = data[this.isChatRoomLeftOffKey].GetBoolean();
+
+				// 前回のチャットルームURLの読み込み
+				string lastTimeChatRoomUrl = string.Empty;
+				if (chatRoomLeftOff)
+				{
+					lastTimeChatRoomUrl = data[this.lastTimeChatRoomUrlKey].GetString();
+				}
+
+				// 表示サイズの読み込み
+				var sizeDictData = JsonSerializer.Deserialize<Dictionary<string, int>>(data[this.sizeKey].GetRawText());
+				Size savedSizeData = new Size(sizeDictData[this.WidthKey], sizeDictData[this.HeightKey]);
+
+				// 表示位置の読み込み
+				var locationDictData = JsonSerializer.Deserialize<Dictionary<string, int>>(data[this.locationKey].GetRawText());
+				Point savedLocationData = new Point(locationDictData[this.XKey], locationDictData[this.YKey]);
+
+				// 最大化要否の読み込み
+				bool maximize = data[this.isMaximizedKey].GetBoolean();
+
+				// Enter押下による改行の要否の保持および設定
+				this.SetEnterLineBreak(enterLineBreak);
+
+				// 前回のチャットルームを再開の要否の保持および設定
+				this.SetChatRoomLeftOff(chatRoomLeftOff);
+
+				// 前回のチャットルームURLの保持および設定
+				this.SetLastTimeChatRoomUrl(lastTimeChatRoomUrl);
+
+				// 表示位置の保持および設定
+				this.SetLocationKeep(savedLocationData);
+
+				// 保存済みの表示サイズが画面内に収まっている場合
+				this.SetSizeKeep(savedSizeData);
+
+				// 最大化の要否の保持および設定
+				this.SetMaximize(maximize);
+			}
+			catch
+			{
+				// 設定保持用JSONファイル作成
+				this.CreateSettingsJson();
+			}
+		}
+
+		/// <summary>
+		/// 設定JSONファイル作成
+		/// </summary>
+		private void CreateSettingsJson()
+		{
+			// 設定JSONファイルが存在していた場合は削除
+			if (File.Exists(@settingsJsonName))
+			{
+				File.Delete(@settingsJsonName);
+			}
+
+			// 設定JSONファイルを作成
+			File.Create(@settingsJsonName).Dispose();
+
+			// 設定JSONファイルに記録
+			this.RecordSettingsJson();
+		}
+
+		/// <summary>
+		/// 設定JSONファイルへ記録
+		/// </summary>
+		private void RecordSettingsJson()
+		{
+			try
+			{
+				// 設定JSONオブジェクト
+				var jsonObject = new Dictionary<string, object>
+				{
+					// Enter押下による改行
+					[this.enterLineBreakKey] = this.isEnterLineBreakKeep,
+
+					// 前回のチャットルームを再開
+					[this.isChatRoomLeftOffKey] = this.isChatRoomLeftOffKeep,
+
+					// 前回のチャットルームURL
+					[this.lastTimeChatRoomUrlKey] = this.lastTimeChatRoomUrl,
+
+					// 表示位置
+					[this.locationKey] = new Dictionary<string, int>
+					{
+						[this.XKey] = this.locationKeep.X,
+						[this.YKey] = this.locationKeep.Y
+					},
+
+					// 表示サイズ
+					[this.sizeKey] = new Dictionary<string, int>
+					{
+						[this.WidthKey] = this.sizeKeep.Width,
+						[this.HeightKey] = this.sizeKeep.Height
+					},
+
+					// 最大化
+					[this.isMaximizedKey] = this.WindowState == FormWindowState.Maximized
+				};
+
+				// JSON文字列に変換
+				string jsonStr = JsonSerializer.Serialize(jsonObject, new JsonSerializerOptions
+				{
+					WriteIndented = true
+				});
+
+				// 設定JSONファイルに記録
+				File.WriteAllText(@settingsJsonName, jsonStr);
+			}
+			catch
+			{
+				// 設定保持用JSONファイル作成
+				this.CreateSettingsJson();
+			}
+		}
+
+		/// <summary>
+		/// Enter押下による改行の要否の保持および設定
+		/// </summary>
+		/// <param name="flg"></param>
+		private void SetEnterLineBreak(bool flg)
+		{
+			this.isEnterLineBreakKeep = flg;
+		}
+
+		/// <summary>
+		/// 前回のチャットルームを再開の要否の保持および設定
+		/// </summary>
+		/// <param name="flg"></param>
+		private void SetChatRoomLeftOff(bool flg)
+		{
+			this.isChatRoomLeftOffKeep = flg;
+		}
+
+		/// <summary>
+		/// 前回のチャットルームURLの保持および設定
+		/// </summary>
+		/// <param name="url"></param>
+		private void SetLastTimeChatRoomUrl(string url)
+		{
+			// 前回のチャットルームを再開する場合
+			if (this.isChatRoomLeftOffKeep)
+			{
+				this.lastTimeChatRoomUrl = url;
+			}
+		}
+
+		/// <summary>
+		/// 表示位置の保持および設定
+		/// </summary>
+		/// <param name="location"></param>
+		private void SetLocationKeep(Point location)
+		{
+			// 表示位置が画面内に収まっている場合
+			if (this.IsLocationSetTrue(location))
+			{
+				this.Location = location;
+			}
+		}
+
+		/// <summary>
+		/// 表示サイズの保持および設定
+		/// </summary>
+		/// <param name="size"></param>
+		private void SetSizeKeep(Size size)
+		{
+			// 表示サイズが画面内に収まっている場合
+			if (this.IsSizeSetTrue(size))
+			{
+				// 保存済みの表示サイズを設定
+				this.Size = size;
+			}
+			// 表示サイズが画面内に収まっていない場合
+			else
+			{
+				// 最小サイズに設定
+				this.Size = this.MinimumSize;
+			}
+		}
+
+		/// <summary>
+		/// 最大化の要否を設定
+		/// </summary>
+		/// <param name="flg"></param>
+		private void SetMaximize(bool flg)
+		{
+			// 最大化する場合
+			if (flg)
+			{
+				this.WindowState = FormWindowState.Maximized;
+			}
+			// 最大化しない場合
+			else
+			{
+				this.WindowState = FormWindowState.Normal;
+			}
+		}
+
+		/// <summary>
+		/// 保存済みの表示位置が画面内に収まるかどうかを判定
+		/// </summary>
+		/// <param name="location"></param>
+		/// <returns></returns>
+		private bool IsLocationSetTrue(Point location)
+		{
+			// 有効なディスプレイをすべて取得
+			foreach (var screen in Screen.AllScreens)
+			{
+				// 保存済みの表示位置が画面内に収まっている場合
+				if (screen.WorkingArea.Contains(location))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// 保存済みの表示サイズが画面内に収まるかどうかを判定
+		/// </summary>
+		/// <param name="size"></param>
+		/// <returns></returns>
+		private bool IsSizeSetTrue(Size size)
+		{
+			// 表示されたディスプレイを取得
+			var currentScreen = System.Windows.Forms.Screen.FromControl(this);
+
+			// 保存済みの表示サイズが画面内に収まっている場合
+			if (size.Width <= currentScreen.WorkingArea.Width && size.Height <= currentScreen.WorkingArea.Height)
+			{
+				return true;
+			}
+
+			return false;
+		}
 
 		/// <summary>
 		/// ChatGPTView初期化
@@ -282,333 +546,12 @@ namespace ChatGPTExtend
 		}
 
 		/// <summary>
-		/// 表示サイズおよび表示位置を設定
-		/// </summary>
-		private void SetSizeAndLocation()
-		{
-			try
-			{
-				// 表示サイズおよび表示位置を記録するJSONファイルが存在した場合
-				if (File.Exists(@sizeAndLocationJsonName))
-				{
-					// JSONの内容を取得
-					string json = File.ReadAllText(@sizeAndLocationJsonName);
-					var data = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
-
-					// 表示サイズおよび表示位置を読み込み
-					var locationDict = JsonSerializer.Deserialize<Dictionary<string, int>>(data[this.locationKey].GetRawText());
-					var sizeDict = JsonSerializer.Deserialize<Dictionary<string, int>>(data[this.sizeKey].GetRawText());
-
-					// 保存済みの表示サイズ
-					Size savedSize = new Size(sizeDict[this.WidthKey], sizeDict[this.HeightKey]);
-
-					// 保存済みの表示位置
-					Point savedLocation = new Point(locationDict[this.XKey], locationDict[this.YKey]);
-
-					// 保存済みの表示サイズのX座標が0未満の場合
-					if (savedLocation.X < 0)
-					{
-						savedLocation.X = 0;
-					}
-
-					// 保存済みの表示サイズのX座標が0未満の場合
-					if (savedLocation.Y < 0)
-					{
-						savedLocation.Y = 0;
-					}
-
-					// 保存済みの表示位置が画面内に収まっている場合
-					if (this.IsLocationSetTrue(savedLocation))
-					{
-						// 表示位置を適用
-						this.Location = savedLocation;
-
-						// 保存済みの表示サイズが表示対象画面のサイズ以下の場合
-						if (this.IsSetSizeTrue(savedSize))
-						{
-							// 保存済みの表示サイズおよび保存済みの表示位置を保持
-							this.KeepSizeAndLocation(savedSize, savedLocation);
-						}
-						else
-						{
-							// デフォルト表示サイズおよびデフォルト表示位置を記録と保持
-							this.RecordSizeAndLocationJson();
-						}
-					}
-					else
-					{
-						// デフォルト表示サイズおよびデフォルト表示位置を記録と保持
-						this.RecordSizeAndLocationJson();
-					}
-				}
-				else
-				{
-					// 表示サイズおよび表示位置を記録するJSONファイルを作成
-					File.Create(@sizeAndLocationJsonName).Dispose();
-
-					// デフォルト表示サイズおよびデフォルト表示位置を記録と保持
-					this.RecordSizeAndLocationJson();
-				}
-			}
-			catch
-			{
-				// デフォルト表示サイズおよびデフォルト表示位置を記録と保持
-				this.RecordSizeAndLocationJson();
-			}
-		}
-
-
-		/// <summary>
-		/// 起動時に読み込んだ保存済みの表示位置が画面内に収まるかどうかを判定
-		/// </summary>
-		/// <param name="location"></param>
-		/// <returns></returns>
-		private bool IsLocationSetTrue(Point location)
-		{
-			// 有効なディスプレイをすべて取得
-			foreach (var screen in Screen.AllScreens)
-			{
-				// 保存済みの表示位置が画面内に収まっている場合
-				if (screen.WorkingArea.Contains(location))
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-
-		/// <summary>
-		/// 起動時に読み込んだ保存済みの表示サイズが表示対象のディスプレイの画面サイズ以下かどうかを判定
-		/// </summary>
-		/// <param name="size"></param>
-		/// <returns></returns>
-		private bool IsSetSizeTrue(Size size)
-		{
-			// 表示されたディスプレイを取得
-			var screen = System.Windows.Forms.Screen.FromControl(this);
-
-			// 保存済みの表示サイズが表示対象画面のサイズ以下かどうかを返す
-			return size.Width <= screen.Bounds.Width && size.Height <= screen.Bounds.Height;
-		}
-
-		/// <summary>
-		/// 表示サイズおよび表示位置を記録するJSONファイルへの書き込みを行う
-		/// <param name="size"></param>
-		/// <param name="location"></param>
-		/// </summary>
-		private void RecordSizeAndLocationJson(Size? size = null, Point? location = null)
-		{
-			// デフォルト表示サイズ
-			Size defaultSize = new Size(1280, 720);
-
-			// 表示サイズおよび表示位置を記録するJSONオブジェクト
-			var jsonObject = new Dictionary<string, object>();
-
-			try
-			{
-				// 引数に表示位置および表示サイズが設定されていた場合
-				if (size != null && location != null)
-				{
-					// 表示サイズおよび表示位置を記録
-					jsonObject = new Dictionary<string, object>
-					{
-						[this.sizeKey] = new Dictionary<string, int>
-						{
-							[this.WidthKey] = size.Value.Width,
-							[this.HeightKey] = size.Value.Height
-						},
-						[this.locationKey] = new Dictionary<string, int>
-						{
-							[this.XKey] = location.Value.X,
-							[this.YKey] = location.Value.Y
-						}
-					};
-				}
-				else
-				{
-					// 画面中央に表示
-					this.CenterToScreen();
-
-					// デフォルト表示サイズおよびデフォルト表示位置を記録
-					jsonObject = new Dictionary<string, object>
-					{
-						[this.sizeKey] = new Dictionary<string, int>
-						{
-							[this.WidthKey] = defaultSize.Width,
-							[this.HeightKey] = defaultSize.Height
-						},
-						[this.locationKey] = new Dictionary<string, int>
-						{
-							[this.XKey] = this.Location.X,
-							[this.YKey] = this.Location.Y
-						}
-					};
-
-					// デフォルト表示サイズおよびデフォルト表示位置を保持
-					this.KeepSizeAndLocation(defaultSize, this.Location);
-				}
-			}
-			catch
-			{
-				// 表示サイズおよび表示位置を記録するJSONファイルが存在しない場合は作成
-				if (!File.Exists(@sizeAndLocationJsonName))
-				{
-					File.Create(@sizeAndLocationJsonName).Dispose();
-				}
-
-				// 表示サイズおよび表示位置を記録
-				jsonObject = new Dictionary<string, object>
-				{
-					[this.sizeKey] = new Dictionary<string, int>
-					{
-						[this.WidthKey] = size.Value.Width,
-						[this.HeightKey] = size.Value.Height
-					},
-					[this.locationKey] = new Dictionary<string, int>
-					{
-						[this.XKey] = location.Value.X,
-						[this.YKey] = location.Value.Y
-					}
-				};
-
-				// 表示サイズおよび表示位置を保持
-				this.KeepSizeAndLocation(size.Value, location.Value);
-			}
-			finally
-			{
-				// JSON文字列に変換
-				string jsonStr = JsonSerializer.Serialize(jsonObject, new JsonSerializerOptions
-				{
-					WriteIndented = true
-				});
-
-				// 表示サイズおよび表示位置を記録するJSONファイルへの書き込み
-				File.WriteAllText(@sizeAndLocationJsonName, jsonStr);
-			}
-		}
-
-		/// <summary>
-		/// 起動時の表示サイズおよび表示位置の保持と適用
-		/// </summary>
-		/// <param name="size"></param>
-		/// <param name="location"></param>
-		private void KeepSizeAndLocation(Size size, Point location)
-		{
-			// 表示位置の保持
-			this.sizeKeep = size;
-			this.Size = this.sizeKeep;
-
-			// 表示サイズの保持
-			this.locationKeep = location;
-			this.Location = this.locationKeep;
-		}
-
-		/// <summary>
-		/// 最大化要否を設定
-		/// </summary>
-		private void SetMaximized()
-		{
-			// 最大化設定フラグ
-			bool setFlg = false;
-
-			try
-			{
-				// 最大化要否を記録するJSONファイルが存在した場合
-				if (File.Exists(@isMaximizedJsonName))
-				{
-					// 最大化要否を記録するJSONファイルの内容を取得
-					string json = File.ReadAllText(@isMaximizedJsonName);
-					var data = JsonSerializer.Deserialize<Dictionary<string, bool>>(json);
-
-					// 保存済みの最大化要否
-					setFlg = data[this.isMaximizedKey];
-
-					// 最大化要否を設定
-					if (setFlg)
-					{
-						this.WindowState = FormWindowState.Maximized;
-					}
-					else
-					{
-						this.WindowState = FormWindowState.Normal;
-					}
-				}
-				else
-				{
-					// 最大化要否を記録するJSONファイルを作成
-					File.Create(@isMaximizedJsonName).Dispose();
-
-					// 最大化無しを記録
-					this.RecordMaximized(setFlg);
-
-					// 最大化しない
-					this.WindowState = FormWindowState.Normal;
-				}
-			}
-			catch
-			{
-				// 最大化無しを記録
-				this.RecordMaximized(setFlg);
-
-				// 最大化しない
-				this.WindowState = FormWindowState.Normal;
-			}
-		}
-
-		/// <summary>
-		/// 最大化要否を記録するJSONファイルへの書き込みを行う
-		/// </summary>
-		private void RecordMaximized(bool flg)
-		{
-			// 最大化要否を記録するJSONオブジェクト
-			var jsonObject = new Dictionary<string, bool>();
-
-			try
-			{
-				// 最大化要否を記録
-				jsonObject = new Dictionary<string, bool>
-				{
-					[this.isMaximizedKey] = flg
-				};
-			}
-			catch
-			{
-				// 最大化要否を記録するJSONファイルが存在しない場合
-				if (!File.Exists(@isMaximizedJsonName))
-				{
-					// 最大化要否を記録するJSONファイルJSONファイルを作成
-					File.Create(@isMaximizedJsonName).Dispose();
-				}
-
-				// 最大化要否を記録
-				jsonObject = new Dictionary<string, bool>
-				{
-					[this.isMaximizedKey] = flg
-				};
-			}
-			finally
-			{
-				// JSON文字列に変換
-				string jsonStr = JsonSerializer.Serialize(jsonObject, new JsonSerializerOptions
-				{
-					WriteIndented = true
-				});
-
-				// 最大化要否を記録するJSONファイルJSONファイルへの書き込み
-				File.WriteAllText(@isMaximizedJsonName, jsonStr);
-			}
-		}
-
-		/// <summary>
 		/// DeactiveイベントおよびClosingイベント共通処理
 		/// </summary>
 		private void DeactiveAndClosing()
 		{
-			// 表示サイズおよび表示位置を記録
-			this.RecordSizeAndLocationJson(this.sizeKeep, this.locationKeep);
-
-			// 最大化要否を記録
-			this.RecordMaximized(this.WindowState == FormWindowState.Maximized);
+			// 設定JSONファイルへの書き込み
+			this.RecordSettingsJson();
 		}
 
 		/// <summary>
@@ -621,92 +564,6 @@ namespace ChatGPTExtend
 			{
 				this.sizeKeep = this.Size;
 				this.locationKeep = this.Location;
-			}
-		}
-
-		/// <summary>
-		/// Enter押下による改行有効化の要否の設定
-		/// </summary>
-		private void SetEnterLineBreak()
-		{
-			// Enter押下による改行有効化設定フラグ
-			bool setFlg = false;
-
-			try
-			{
-				// Enter押下による改行有効化設定を記録するJSONファイルが存在しない場合
-				if (!File.Exists(@isEnterLineBreakJsonName))
-				{
-					// Enter押下による改行有効化設定を記録するJSONファイルを作成
-					File.Create(@isEnterLineBreakJsonName).Dispose();
-
-					// Enter押下による改行有効化設定を記録するJSONファイルへの書き込みを行う
-					this.RecordEnterLineBreak(setFlg);
-				}
-
-				// Enter押下による改行有効化設定を記録するJSONの内容を取得
-				string json = File.ReadAllText(@isEnterLineBreakJsonName);
-				var data = JsonSerializer.Deserialize<Dictionary<string, bool>>(json);
-
-				// 保存済みのEnter押下による改行有効化設定
-				setFlg = data[this.isEnterLineBreakKey];
-			}
-			catch
-			{
-				// Enter押下による改行有効化設定を記録するJSONファイルを作成
-				File.Create(@isEnterLineBreakJsonName).Dispose();
-
-				// Enter押下による改行有効化設定を記録するJSONファイルへの書き込みを行う
-				this.RecordEnterLineBreak(setFlg);
-			}
-			finally
-			{
-				// Enter押下による改行要否を設定
-				this.isEnterLineBreakKeep = setFlg;
-			}
-		}
-
-		/// <summary>
-		/// Enter押下による改行要否を記録するJSONファイルへの書き込みを行う
-		/// </summary>
-		private void RecordEnterLineBreak(bool flg)
-		{
-			// Enter押下による改行要否を記録するJSONオブジェクト
-			var jsonObject = new Dictionary<string, bool>();
-
-			try
-			{
-				// Enter押下による改行要否を記録
-				jsonObject = new Dictionary<string, bool>
-				{
-					[this.isEnterLineBreakKey] = flg
-				};
-			}
-			catch
-			{
-				// Enter押下による改行要否を記録するJSONファイルが存在しない場合
-				if (!File.Exists(@isEnterLineBreakJsonName))
-				{
-					// JSONファイルを作成
-					File.Create(@isEnterLineBreakJsonName).Dispose();
-				}
-
-				// Enter押下による改行要否を記録
-				jsonObject = new Dictionary<string, bool>
-				{
-					[this.isEnterLineBreakKey] = flg
-				};
-			}
-			finally
-			{
-				// JSON文字列に変換
-				string jsonStr = JsonSerializer.Serialize(jsonObject, new JsonSerializerOptions
-				{
-					WriteIndented = true
-				});
-
-				// Enter押下による改行要否を記録するJSONファイルへの書き込み
-				File.WriteAllText(@isEnterLineBreakJsonName, jsonStr);
 			}
 		}
 
