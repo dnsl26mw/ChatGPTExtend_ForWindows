@@ -1,22 +1,18 @@
 ﻿using Microsoft.Web.WebView2.Core;
-using Microsoft.Web.WebView2.WinForms;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-using System.Text.Json;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.Runtime.InteropServices;
-using System.Runtime.CompilerServices;
-using System.Threading;
+using System.Text.Json;
+using System.Windows.Forms;
 
 namespace ChatGPTExtend
 {
 	public partial class ChatGPTExtend : Form
 	{
-		#region フィールド変数
+		#region 設定JSON
 
 		// 設定保持JSONファイル名
 		private string settingsJsonName = "./Settings.json";
@@ -50,6 +46,10 @@ namespace ChatGPTExtend
 
 		// 設定保持JSONファイルの最大化要否保持用のキー
 		string isMaximizedKey = "Maximized";
+
+		#endregion
+
+		#region フィールド変数
 
 		// Enter押下による改行の要否を保持
 		private bool isEnterLineBreakKeep = false;
@@ -133,11 +133,7 @@ namespace ChatGPTExtend
 				bool chatRoomLeftOff = data[this.isChatRoomLeftOffKey].GetBoolean();
 
 				// 前回のチャットルームURLの読み込み
-				string lastTimeChatRoomUrl = string.Empty;
-				if (chatRoomLeftOff)
-				{
-					lastTimeChatRoomUrl = data[this.lastTimeChatRoomUrlKey].GetString();
-				}
+				string lastTimeChatRoomUrl = data[this.lastTimeChatRoomUrlKey].GetString();
 
 				// 表示サイズの読み込み
 				var sizeDictData = JsonSerializer.Deserialize<Dictionary<string, int>>(data[this.sizeKey].GetRawText());
@@ -379,98 +375,24 @@ namespace ChatGPTExtend
 				"--disable-gpu-shader-disk-cache " +
 				"--disable-background-timer-throttling " +
 				"--process-per-site" +
-				"--enable - features = OverlayScrollbar" +
-				"--disable - features = CalculateNativeWinOcclusion" +
+				"--enable-features = OverlayScrollbar" +
+				"--disable-features = CalculateNativeWinOcclusion" +
 				"--enable-zero-copy " +
 				"--enable-gpu-memory-buffer-video-frames";
 			this.chatGPTViewEnvironment = await CoreWebView2Environment.CreateAsync(null, "UserData", options);
 
-			// chatGPTViewの初期化
+			// chatGPTView.CoreWebview2の初期化
 			await this.chatGPTView.EnsureCoreWebView2Async(chatGPTViewEnvironment);
 
-			// 初期化および再生成時の共通処理
-			await this.InitAndRegenerateCommonProc(this.chatGPTView);
-
-			// ChatGPTに移動
-			this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
-		}
-
-		/// <summary>
-		/// ChatGPTView再生成
-		/// </summary>
-		/// <returns></returns>
-		private async Task ReGenerateChatGPTView()
-		{
-			// ユーザデータがNULLの場合
-			if (this.chatGPTViewEnvironment == null)
-			{
-				return;
-			}
-
-			// chatGPTViewがNULLの場合
-			if (this.chatGPTView == null)
-			{
-				return;
-			}
-
-			// chatGPTView.CoreWebView2がNULLの場合
-			if (this.chatGPTView.CoreWebView2 == null)
-			{
-				return;
-			}
-
-			// 現在のchatGPTViewを取得
-			var oldView = this.chatGPTView;
-
-			// 現在のURLを取得
-			string url = oldView.CoreWebView2.Source;
-
-			// 新しいchatGPTViewを生成
-			var newView = new WebView2();
-			newView.Dock = DockStyle.Fill;
-			newView.Visible = false;
-			this.Controls.Add(newView);
-
-			// 新しいchatGPTViewのchatGPTView.CoreWebView2の初期化
-			await newView.EnsureCoreWebView2Async(this.chatGPTViewEnvironment);
-
-			// 初期化および再生成時の共通処理
-			await this.InitAndRegenerateCommonProc(newView);
-
-			// 新しいchatGPTViewで現在のURLを読み込み
-			newView.CoreWebView2.Navigate(url);
-
-			// ホワイトアウト防止のため、読み込み完了まで待機
-			var tcs = new TaskCompletionSource<bool>();
-			newView.CoreWebView2.NavigationCompleted += (s, e) =>
-			{
-				tcs.TrySetResult(true);
-			};
-			await tcs.Task;
-
-			// 新しいchatGPTViewに差し替え
-			newView.Visible = true;
-			this.Controls.Remove(oldView);
-			oldView.Dispose();
-			this.chatGPTView = newView;
-		}
-
-		/// <summary>
-		/// chatGPTViewの初期化および再生成時の共通処理
-		/// </summary>
-		/// <param name="webView2"></param>
-		/// <param name="url"></param>
-		private async Task InitAndRegenerateCommonProc(WebView2 webView2)
-		{
 			// WebMessageReceivedイベントの追加
-			webView2.CoreWebView2.WebMessageReceived -= ChatGPTView_WebMessageReceived;
-			webView2.CoreWebView2.WebMessageReceived += ChatGPTView_WebMessageReceived;
+			this.chatGPTView.CoreWebView2.WebMessageReceived -= ChatGPTView_WebMessageReceived;
+			this.chatGPTView.CoreWebView2.WebMessageReceived += ChatGPTView_WebMessageReceived;
 
 			// Enter押下による改行を行う場合
 			if (this.isEnterLineBreakKeep)
 			{
 				// Enter押下による改行有効化のためのJavaScriptコードをchatGPTViewに追加
-				await webView2.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
+				await this.chatGPTView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
 
 					// キー押下イベントのリスナーを追加
 					window.addEventListener('keydown', function(e) {
@@ -492,7 +414,7 @@ namespace ChatGPTExtend
 			}
 
 			// DOM削除のためのJavaScriptコードをchatGPTViewに追加
-			await webView2.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
+			await this.chatGPTView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
 
 				// DOMContentLoadedイベントのリスナーを追加
 				window.addEventListener('DOMContentLoaded', () => {
@@ -503,10 +425,17 @@ namespace ChatGPTExtend
 						// DOM内容を取得
 						const messages = document.querySelectorAll('[data-message-author-role]');
 
-						// メッセージが120件を超えている場合は古いメッセージから削除
+						// メッセージが120件を超えている場合は古いメッセージから非表示
 						if (messages.length > 120) {
 							for (let i = 0; i < messages.length - 120; i++) {
-								messages[i].remove();
+
+								// メッセージの親要素のarticleタグを取得
+								const container = messages[i].closest('article');
+
+								// articleタグが存在する場合は非表示
+								if(container) {
+									container.style.display = 'none';
+								}
 							}
 						}
 					});
@@ -525,24 +454,45 @@ namespace ChatGPTExtend
 			");
 
 			// 開発者ツール無効化
-			webView2.CoreWebView2.Settings.AreDevToolsEnabled = false;
+			this.chatGPTView.CoreWebView2.Settings.AreDevToolsEnabled = false;
 
 			// ステータスバー表示無効化
-			webView2.CoreWebView2.Settings.IsStatusBarEnabled = false;
+			this.chatGPTView.CoreWebView2.Settings.IsStatusBarEnabled = false;
 
 			// デフォルトの右クリックメニュー無効化
-			webView2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+			this.chatGPTView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
 
 			// ズームコントロール無効化
-			webView2.CoreWebView2.Settings.IsZoomControlEnabled = false;
+			this.chatGPTView.CoreWebView2.Settings.IsZoomControlEnabled = false;
 
-			// 共有チャット以外のチャット内リンクをクリックしたらデフォルトのブラウザを起動
-			webView2.CoreWebView2.NewWindowRequested -= this.ChatGPTView_NewWindowRequested;
-			webView2.CoreWebView2.NewWindowRequested += this.ChatGPTView_NewWindowRequested;
+			// 共有チャット以外のチャット内リンクをクリックした場合の処理
+			this.chatGPTView.CoreWebView2.NewWindowRequested -= this.ChatGPTView_NewWindowRequested;
+			this.chatGPTView.CoreWebView2.NewWindowRequested += this.ChatGPTView_NewWindowRequested;
 
-			// チャットルーム移動時にChatGPTView再生成
-			webView2.CoreWebView2.NavigationStarting -= this.ChatGPTView_NavigationStarting;
-			webView2.CoreWebView2.NavigationStarting += this.ChatGPTView_NavigationStarting;
+			// チャットルーム移動時の処理
+			this.chatGPTView.CoreWebView2.HistoryChanged -= this.ChatGPTView_HistoryChanged;
+			this.chatGPTView.CoreWebView2.HistoryChanged += this.ChatGPTView_HistoryChanged;
+
+			// 前回のチャットルームを再開する場合
+			if (this.isChatRoomLeftOffKeep)
+			{
+				// 前回のチャットルームURLが保存されている場合
+				if (this.lastTimeChatRoomUrl.Contains("chatgpt.com/c/"))
+				{
+					// 前回のチャットルームURLを読み込み
+					this.chatGPTView.CoreWebView2.Navigate(this.lastTimeChatRoomUrl);
+				}
+				else
+				{
+					// ChatGPTのトップページの読み込み
+					this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
+				}
+			}
+			else
+			{
+				// ChatGPTのトップページの読み込み
+				this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
+			}
 		}
 
 		/// <summary>
@@ -732,17 +682,20 @@ namespace ChatGPTExtend
 		}
 
 		/// <summary>
-		/// ChatGPTView_NavigationStartingイベント
+		/// ChatGPTView_HistoryChangedイベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
-		private async void ChatGPTView_NavigationStarting(object sender, CoreWebView2NavigationStartingEventArgs e)
+		private void ChatGPTView_HistoryChanged(object sender, object e)
 		{
+			// 現在のURLを取得
+			string currentUrl = this.chatGPTView.CoreWebView2.Source;
+
 			// チャットルーム移動時
-			if (e.Uri.Contains("/c/"))
+			if (currentUrl.Contains("chatgpt.com/c/"))
 			{
-				// ChatGPTView再生成
-				await this.ReGenerateChatGPTView();
+				// チャットルームURLを保持
+				this.SetLastTimeChatRoomUrl(currentUrl);
 			}
 		}
 

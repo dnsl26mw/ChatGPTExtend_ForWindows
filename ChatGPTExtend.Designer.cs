@@ -33,7 +33,6 @@ namespace ChatGPTExtend
 			this.components = new System.ComponentModel.Container();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChatGPTExtend));
 			this.chatGPTView = new Microsoft.Web.WebView2.WinForms.WebView2();
-			this.chatGPTViewContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
 			((System.ComponentModel.ISupportInitialize)(this.chatGPTView)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -51,12 +50,6 @@ namespace ChatGPTExtend
 			this.chatGPTView.Size = new System.Drawing.Size(1264, 681);
 			this.chatGPTView.TabIndex = 0;
 			this.chatGPTView.ZoomFactor = 1D;
-			// 
-			// chatGPTViewContextMenu
-			// 
-			this.chatGPTViewContextMenu.Name = "chatGPTViewContextMenu";
-			this.chatGPTViewContextMenu.Size = new System.Drawing.Size(61, 4);
-			this.chatGPTViewContextMenu.Text = "ChatGPTExtend";
 			// 
 			// ChatGPTExtend
 			// 
@@ -82,7 +75,6 @@ namespace ChatGPTExtend
 		#endregion
 
 		private Microsoft.Web.WebView2.WinForms.WebView2 chatGPTView;
-		private System.Windows.Forms.ContextMenuStrip chatGPTViewContextMenu;
 	}
 }
 
