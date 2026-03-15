@@ -49,7 +49,7 @@ namespace ChatGPTExtend
 			this.chatGPTView.Name = "chatGPTView";
 			this.chatGPTView.Size = new System.Drawing.Size(1264, 681);
 			this.chatGPTView.TabIndex = 0;
-			this.chatGPTView.ZoomFactor = 1D;
+			this.chatGPTView.ZoomFactor = 0.88D;
 			// 
 			// ChatGPTExtend
 			// 
