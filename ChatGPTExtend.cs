@@ -473,6 +473,10 @@ namespace ChatGPTExtend
 			this.chatGPTView.CoreWebView2.HistoryChanged -= this.ChatGPTView_HistoryChanged;
 			this.chatGPTView.CoreWebView2.HistoryChanged += this.ChatGPTView_HistoryChanged;
 
+			// ダウンロード開始の処理
+			this.chatGPTView.CoreWebView2.DownloadStarting -= this.ChaatGPTView_DownloadStarting;
+			this.chatGPTView.CoreWebView2.DownloadStarting += this.ChaatGPTView_DownloadStarting;
+
 			// 前回のチャットルームを再開する場合
 			if (this.isChatRoomLeftOffKeep)
 			{
@@ -696,6 +700,35 @@ namespace ChatGPTExtend
 			{
 				// チャットルームURLを保持
 				this.SetLastTimeChatRoomUrl(currentUrl);
+			}
+		}
+
+		/// <summary>
+		/// ChaatGPTView_DownloadStartingイベント
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void ChaatGPTView_DownloadStarting(object sender, CoreWebView2DownloadStartingEventArgs e)
+		{
+			// ファイル名を指定して保存ダイアログ
+			FileDialog saveFileDialog = new SaveFileDialog();
+
+			// ダウンロードするファイルのファイル名を取得
+			saveFileDialog.FileName = Path.GetFileName(e.ResultFilePath);
+
+			// ダウンロードするファイルの拡張子を取得
+			saveFileDialog.Filter = "All files (*.*)|*.*";
+
+			// ファイル名を指定して保存ダイアログでOKクリックの場合
+			if (saveFileDialog.ShowDialog() == DialogResult.OK)
+			{
+				// ダウンロードするファイルの保存先を指定
+				e.ResultFilePath = saveFileDialog.FileName;
+			}
+			else
+			{
+				// ダウンロードをキャンセル
+				e.Cancel = true;
 			}
 		}
 
