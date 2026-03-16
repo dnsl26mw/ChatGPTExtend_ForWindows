@@ -7,6 +7,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 
 namespace ChatGPTExtend
 {
@@ -462,6 +463,9 @@ namespace ChatGPTExtend
 			// デフォルトの右クリックメニュー無効化
 			this.chatGPTView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
 
+			// デフォルトのスクリプトダイアログ無効化
+			this.chatGPTView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = false;
+
 			// ズームコントロール無効化
 			this.chatGPTView.CoreWebView2.Settings.IsZoomControlEnabled = false;
 
@@ -710,25 +714,29 @@ namespace ChatGPTExtend
 		/// <param name="e"></param>
 		private void ChaatGPTView_DownloadStarting(object sender, CoreWebView2DownloadStartingEventArgs e)
 		{
-			// ファイル名を指定して保存ダイアログ
-			FileDialog saveFileDialog = new SaveFileDialog();
-
-			// ダウンロードするファイルのファイル名を取得
-			saveFileDialog.FileName = Path.GetFileName(e.ResultFilePath);
-
-			// ダウンロードするファイルの拡張子を取得
-			saveFileDialog.Filter = "All files (*.*)|*.*";
-
-			// ファイル名を指定して保存ダイアログでOKクリックの場合
-			if (saveFileDialog.ShowDialog() == DialogResult.OK)
+			// 名前を付けて保存ダイアログ
+			using (SaveFileDialog saveFileDialog = new SaveFileDialog())
 			{
-				// ダウンロードするファイルの保存先を指定
-				e.ResultFilePath = saveFileDialog.FileName;
-			}
-			else
-			{
-				// ダウンロードをキャンセル
-				e.Cancel = true;
+				// Chromium標準のダウンロード処理をキャンセル
+				e.Handled = true;
+
+				// ダウンロードするファイルのファイル名を取得
+				saveFileDialog.FileName = Path.GetFileName(e.ResultFilePath);
+
+				// ダウンロードするファイルの拡張子を取得
+				saveFileDialog.Filter = "All files (*.*)|*.*";
+
+				// 名前を付けて保存ダイアログでOKクリックの場合
+				if (saveFileDialog.ShowDialog() == DialogResult.OK)
+				{
+					// ダウンロードするファイルの保存先を指定
+					e.ResultFilePath = saveFileDialog.FileName;
+				}
+				else
+				{
+					// ダウンロードをキャンセル
+					e.Cancel = true;
+				}
 			}
 		}
 
