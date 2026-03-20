@@ -52,7 +52,16 @@ namespace ChatGPTExtend
 
 		#endregion
 
-		#region フィールド変数
+		#region フィールド変数・定数
+
+		// ChatGPTのURL
+		private const string CHATGPT_URL = "https://chatgpt.com/";
+
+		// ChatGPTのチャットルームのURLの先頭部分
+		private const string CHATGPT_CHAT_ROOM_URL_HEAD = "https://chatgpt.com/share/";
+
+		// ChatGPTの共有チャットのURLの先頭部分
+		private const string CHATGPT_SHARED_CHAT_URL_HEAD = "https://chatgpt.com/c/";
 
 		// Enter押下による改行の要否を保持
 		private bool isEnterLineBreakKeep = false;
@@ -68,9 +77,6 @@ namespace ChatGPTExtend
 
 		// 表示サイズを保持
 		private Size sizeKeep = new Size();
-
-		// ズーム倍率を保持
-		private double zoomFactorKeep = 0;
 
 		// ユーザデータ
 		private CoreWebView2Environment chatGPTViewEnvironment;
@@ -98,7 +104,7 @@ namespace ChatGPTExtend
 			this.CenterToScreen();
 
 			// 設定の読み込みおよび適用
-			this.ReanSettingsJson();
+			this.ReadSettingsJson();
 
 			// ChatGPTView初期化
 			this.ChatGPTViewInitialize();
@@ -119,7 +125,7 @@ namespace ChatGPTExtend
 		/// <summary>
 		/// 設定JSONファイルの読み込み
 		/// </summary>
-		private void ReanSettingsJson()
+		private void ReadSettingsJson()
 		{
 			try
 			{
@@ -512,7 +518,9 @@ namespace ChatGPTExtend
 			if (this.isChatRoomLeftOffKeep)
 			{
 				// 前回のチャットルームURLが保存されている場合
-				if (this.lastTimeChatRoomUrl.StartsWith("https://chatgpt.com/c/") || this.lastTimeChatRoomUrl.StartsWith("https://chatgpt.com/share/"))
+				if (this.lastTimeChatRoomUrl.StartsWith(CHATGPT_CHAT_ROOM_URL_HEAD) || 
+					this.lastTimeChatRoomUrl.StartsWith(CHATGPT_SHARED_CHAT_URL_HEAD) || 
+					this.lastTimeChatRoomUrl.Equals(CHATGPT_URL))
 				{
 					// 前回のチャットルームURLを読み込み
 					this.chatGPTView.CoreWebView2.Navigate(this.lastTimeChatRoomUrl);
@@ -523,7 +531,7 @@ namespace ChatGPTExtend
 					this.SetLastTimeChatRoomUrl(string.Empty);
 
 					// ChatGPTのトップページの読み込み
-					this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
+					this.chatGPTView.CoreWebView2.Navigate(CHATGPT_URL);
 				}
 			}
 			else
@@ -532,12 +540,12 @@ namespace ChatGPTExtend
 				this.SetLastTimeChatRoomUrl(string.Empty);
 
 				// ChatGPTのトップページの読み込み
-				this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
+				this.chatGPTView.CoreWebView2.Navigate(CHATGPT_URL);
 			}
 		}
 
 		/// <summary>
-		/// DeactiveイベントおよびClosingイベント共通処理
+		/// ChatGPTExtend_DeactiveイベントおよびChatGPTExtend_FormClosingイベント共通処理
 		/// </summary>
 		private void DeactiveAndClosing()
 		{
@@ -546,7 +554,7 @@ namespace ChatGPTExtend
 		}
 
 		/// <summary>
-		/// フォーム移動イベントおよびサイズ変更イベント共通処理
+		/// ChatGPTExtend_ChatGPTExtend_MoveイベントおよびChatGPTExtend_SizeChangedイベント共通処理
 		/// </summary>
 		private void MoveAndSizeChanged()
 		{
@@ -657,7 +665,7 @@ namespace ChatGPTExtend
 		/// <param name="e"></param>
 		private void ChatGPTExtend_Deactive(object sender, EventArgs e)
 		{
-			// DeactiveイベントおよびClosingイベント共通処理
+			// ChatGPTExtend_DeactiveイベントおよびChatGPTExtend_FormClosingイベント共通処理
 			this.DeactiveAndClosing();
 		}
 
@@ -691,31 +699,31 @@ namespace ChatGPTExtend
 					return;
 				}
 
-					// DeactiveイベントおよびClosingイベント共通処理
-					this.DeactiveAndClosing();
+				// ChatGPTExtend_DeactiveイベントおよびChatGPTExtend_FormClosingイベント共通処理
+				this.DeactiveAndClosing();
 
 			}
 		}
 
 		/// <summary>
-		/// ChatGPTExtend_フォーム移動イベント
+		/// ChatGPTExtend_ChatGPTExtend_Moveイベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
 		private void ChatGPTExtend_Move(object sender, EventArgs e)
 		{
-			// フォーム移動イベントおよびサイズ変更イベント共通処理
+			// ChatGPTExtend_ChatGPTExtend_MoveイベントおよびChatGPTExtend_SizeChangedイベント共通処理
 			this.MoveAndSizeChanged();
 		}
 
 		/// <summary>
-		/// ChatGPTExtendサイズ変更イベント
+		/// ChatGPTExtend_SizeChangedイベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
 		private void ChatGPTExtend_SizeChanged(object sender, EventArgs e)
 		{
-			// フォーム移動イベントおよびサイズ変更イベント共通処理
+			// ChatGPTExtend_ChatGPTExtend_MoveイベントおよびChatGPTExtend_SizeChangedイベント共通処理
 			this.MoveAndSizeChanged();
 		}
 
@@ -730,7 +738,7 @@ namespace ChatGPTExtend
 			string uri = args.Uri;
 
 			// ChatGPTの共有リンクは現在の画面で開く
-			if (uri.StartsWith("https://chatgpt.com/share/"))
+			if (uri.StartsWith(CHATGPT_SHARED_CHAT_URL_HEAD))
 			{
 				args.Handled = true;
 				this.chatGPTView.CoreWebView2.Navigate(uri);
@@ -758,7 +766,9 @@ namespace ChatGPTExtend
 			string currentUrl = this.chatGPTView.CoreWebView2.Source;
 
 			// チャットルーム移動時
-			if (currentUrl.StartsWith("https://chatgpt.com/c/") || currentUrl.StartsWith("https://chatgpt.com/share/"))
+			if (currentUrl.StartsWith(CHATGPT_CHAT_ROOM_URL_HEAD) || 
+				currentUrl.StartsWith(CHATGPT_SHARED_CHAT_URL_HEAD) || 
+				currentUrl.Equals(CHATGPT_URL))
 			{
 				// チャットルームURLを保持
 				this.SetLastTimeChatRoomUrl(currentUrl);
@@ -844,7 +854,7 @@ namespace ChatGPTExtend
 		/// <param name="e"></param>
 		private void ChatGPTView_ZoomFactorChanged(object sender, EventArgs e)
 		{
-			// ズーム倍率の記録
+			// ズーム倍率の設定
 			this.SetZoomFactor(this.chatGPTView.ZoomFactor);
 		}
 
