@@ -512,19 +512,25 @@ namespace ChatGPTExtend
 			if (this.isChatRoomLeftOffKeep)
 			{
 				// 前回のチャットルームURLが保存されている場合
-				if (this.lastTimeChatRoomUrl.Contains("chatgpt.com/c/"))
+				if (this.lastTimeChatRoomUrl.StartsWith("https://chatgpt.com/c/") || this.lastTimeChatRoomUrl.StartsWith("https://chatgpt.com/share/"))
 				{
 					// 前回のチャットルームURLを読み込み
 					this.chatGPTView.CoreWebView2.Navigate(this.lastTimeChatRoomUrl);
 				}
 				else
 				{
+					// 保存済みのURLを削除
+					this.SetLastTimeChatRoomUrl(string.Empty);
+
 					// ChatGPTのトップページの読み込み
 					this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
 				}
 			}
 			else
 			{
+				// 保存済みのURLを削除
+				this.SetLastTimeChatRoomUrl(string.Empty);
+
 				// ChatGPTのトップページの読み込み
 				this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
 			}
@@ -665,7 +671,7 @@ namespace ChatGPTExtend
 			// ファイルダウンロード中の場合はメッセージダイアログを表示
 			if (this.fileDownloadingList.Count > 0)
 			{
-				// ファイルダウンロード中の警告メッセージを表示
+				// ファイルダウンロード中メッセージを表示
 				DialogResult dialogResult = MessageBox.Show(
 					"ファイルのダウンロードが進行中です。終了してもよろしいですか？",
 					"確認",
@@ -675,8 +681,8 @@ namespace ChatGPTExtend
 				// 「はい」選択の場合
 				if (dialogResult.Equals(DialogResult.Yes))
 				{
-					// DeactiveイベントおよびClosingイベント共通処理
-					this.DeactiveAndClosing();
+					// ファイルダウンロード中リストをクリア
+					this.fileDownloadingList.Clear();
 				}
 				else
 				{
@@ -684,6 +690,9 @@ namespace ChatGPTExtend
 					e.Cancel = true;
 					return;
 				}
+
+					// DeactiveイベントおよびClosingイベント共通処理
+					this.DeactiveAndClosing();
 
 			}
 		}
@@ -749,7 +758,7 @@ namespace ChatGPTExtend
 			string currentUrl = this.chatGPTView.CoreWebView2.Source;
 
 			// チャットルーム移動時
-			if (currentUrl.Contains("chatgpt.com/c/"))
+			if (currentUrl.StartsWith("https://chatgpt.com/c/") || currentUrl.StartsWith("https://chatgpt.com/share/"))
 			{
 				// チャットルームURLを保持
 				this.SetLastTimeChatRoomUrl(currentUrl);
