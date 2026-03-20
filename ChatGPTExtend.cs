@@ -7,7 +7,6 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
 
 namespace ChatGPTExtend
 {
@@ -15,38 +14,41 @@ namespace ChatGPTExtend
 	{
 		#region 設定JSON
 
-		// 設定保持JSONファイル名
+		// 設定JSONファイル名
 		private string settingsJsonName = "./Settings.json";
 
-		// 設定保持JSONファイルのEnter押下による改行有効化の要否保持用のキー
+		// 設定JSONファイルのEnter押下による改行有効化の要否保持用のキー
 		string enterLineBreakKey = "EnterLineBreak";
 
-		// 設定保持JSONファイルの前回のチャットルームを再開の要否保持用のキー
+		// 設定JSONファイルの前回のチャットルームを再開の要否保持用のキー
 		string isChatRoomLeftOffKey = "ChatRoomLeftOff";
 
-		// 設定保持JSONファイルの前回のチャットルームURL保持用のキー
+		// 設定JSONファイルの前回のチャットルームURL保持用のキー
 		string lastTimeChatRoomUrlKey = "LastTimeChatRoomUrl";
 
-		// 設定保持JSONファイルの表示位置保持用のキー
+		// 設定JSONファイルの表示位置保持用のキー
 		string locationKey = "Location";
 
-		// 設定保持JSONファイルの表示位置X座標保持用のキー
+		// 設定JSONファイルの表示位置X座標保持用のキー
 		string XKey = "X";
 
-		// 設定保持JSONファイルの表示位置Y座標保持用のキー
+		// 設定JSONファイルの表示位置Y座標保持用のキー
 		string YKey = "Y";
 
-		// 設定保持JSONファイルの表示サイズ保持用のキー
+		// 設定JSONファイルの表示サイズ保持用のキー
 		string sizeKey = "Size";
 
-		// 設定保持JSONファイルの表示サイズWidth保持用のキー
+		// 設定JSONファイルの表示サイズWidth保持用のキー
 		string WidthKey = "Width";
 
-		// 設定保持JSONファイルの表示サイズWidth保持用のキー
+		// 設定JSONファイルの表示サイズWidth保持用のキー
 		string HeightKey = "Height";
 
-		// 設定保持JSONファイルの最大化要否保持用のキー
+		// 設定JSONファイルの最大化要否保持用のキー
 		string isMaximizedKey = "Maximized";
+
+		// 設定JSONファイルのズーム倍率保持用のキー
+		string zoomFactorKey = "ZoomFactor";
 
 		#endregion
 
@@ -67,6 +69,9 @@ namespace ChatGPTExtend
 		// 表示サイズを保持
 		private Size sizeKeep = new Size();
 
+		// ズーム倍率を保持
+		private double zoomFactorKeep = 0;
+
 		// ユーザデータ
 		private CoreWebView2Environment chatGPTViewEnvironment;
 
@@ -76,6 +81,9 @@ namespace ChatGPTExtend
 
 		// ダークモード/ライトモードに合わせたタイトルバーの色変更のための定数
 		private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+
+		// ファイルダウンロード中リスト
+		private List<CoreWebView2DownloadOperation> fileDownloadingList = new List<CoreWebView2DownloadOperation>();
 
 		#endregion
 
@@ -147,6 +155,9 @@ namespace ChatGPTExtend
 				// 最大化要否の読み込み
 				bool maximize = data[this.isMaximizedKey].GetBoolean();
 
+				// ズーム倍率の読み込み
+				double zoomFactor = data[this.zoomFactorKey].GetDouble();
+
 				// Enter押下による改行の要否の保持および設定
 				this.SetEnterLineBreak(enterLineBreak);
 
@@ -164,6 +175,9 @@ namespace ChatGPTExtend
 
 				// 最大化の要否の保持および設定
 				this.SetMaximize(maximize);
+
+				// ズーム倍率の保持および設定
+				this.SetZoomFactor(zoomFactor);
 			}
 			catch
 			{
@@ -224,7 +238,10 @@ namespace ChatGPTExtend
 					},
 
 					// 最大化
-					[this.isMaximizedKey] = this.WindowState == FormWindowState.Maximized
+					[this.isMaximizedKey] = this.WindowState == FormWindowState.Maximized,
+
+					// ズーム倍率
+					[this.zoomFactorKey] = this.chatGPTView.ZoomFactor,
 				};
 
 				// JSON文字列に変換
@@ -288,6 +305,25 @@ namespace ChatGPTExtend
 		}
 
 		/// <summary>
+		/// 保存済みの表示位置が画面内に収まるかどうかを判定
+		/// </summary>
+		/// <param name="location"></param>
+		/// <returns></returns>
+		private bool IsLocationSetTrue(Point location)
+		{
+			// 有効なディスプレイをすべて取得
+			foreach (var screen in Screen.AllScreens)
+			{
+				// 保存済みの表示位置が画面内に収まっている場合
+				if (screen.WorkingArea.Contains(location))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		/// <summary>
 		/// 表示サイズの保持および設定
 		/// </summary>
 		/// <param name="size"></param>
@@ -305,6 +341,25 @@ namespace ChatGPTExtend
 				// 最小サイズに設定
 				this.Size = this.MinimumSize;
 			}
+		}
+
+		/// <summary>
+		/// 保存済みの表示サイズが画面内に収まるかどうかを判定
+		/// </summary>
+		/// <param name="size"></param>
+		/// <returns></returns>
+		private bool IsSizeSetTrue(Size size)
+		{
+			// 表示されたディスプレイを取得
+			var currentScreen = System.Windows.Forms.Screen.FromControl(this);
+
+			// 保存済みの表示サイズが画面内に収まっている場合
+			if (size.Width <= currentScreen.WorkingArea.Width && size.Height <= currentScreen.WorkingArea.Height)
+			{
+				return true;
+			}
+
+			return false;
 		}
 
 		/// <summary>
@@ -326,41 +381,12 @@ namespace ChatGPTExtend
 		}
 
 		/// <summary>
-		/// 保存済みの表示位置が画面内に収まるかどうかを判定
+		/// ズーム倍率の保持および設定
 		/// </summary>
-		/// <param name="location"></param>
-		/// <returns></returns>
-		private bool IsLocationSetTrue(Point location)
+		/// <param name="url"></param>
+		private void SetZoomFactor(double zoomFactor)
 		{
-			// 有効なディスプレイをすべて取得
-			foreach (var screen in Screen.AllScreens)
-			{
-				// 保存済みの表示位置が画面内に収まっている場合
-				if (screen.WorkingArea.Contains(location))
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-
-		/// <summary>
-		/// 保存済みの表示サイズが画面内に収まるかどうかを判定
-		/// </summary>
-		/// <param name="size"></param>
-		/// <returns></returns>
-		private bool IsSizeSetTrue(Size size)
-		{
-			// 表示されたディスプレイを取得
-			var currentScreen = System.Windows.Forms.Screen.FromControl(this);
-
-			// 保存済みの表示サイズが画面内に収まっている場合
-			if (size.Width <= currentScreen.WorkingArea.Width && size.Height <= currentScreen.WorkingArea.Height)
-			{
-				return true;
-			}
-
-			return false;
+			this.chatGPTView.ZoomFactor = zoomFactor;
 		}
 
 		/// <summary>
@@ -466,9 +492,6 @@ namespace ChatGPTExtend
 			// デフォルトのスクリプトダイアログ無効化
 			this.chatGPTView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = false;
 
-			// ズームコントロール無効化
-			this.chatGPTView.CoreWebView2.Settings.IsZoomControlEnabled = false;
-
 			// 共有チャット以外のチャット内リンクをクリックした場合の処理
 			this.chatGPTView.CoreWebView2.NewWindowRequested -= this.ChatGPTView_NewWindowRequested;
 			this.chatGPTView.CoreWebView2.NewWindowRequested += this.ChatGPTView_NewWindowRequested;
@@ -481,23 +504,33 @@ namespace ChatGPTExtend
 			this.chatGPTView.CoreWebView2.DownloadStarting -= this.ChaatGPTView_DownloadStarting;
 			this.chatGPTView.CoreWebView2.DownloadStarting += this.ChaatGPTView_DownloadStarting;
 
+			// ズーム倍率変更時の処理
+			this.chatGPTView.ZoomFactorChanged -= this.ChatGPTView_ZoomFactorChanged;
+			this.chatGPTView.ZoomFactorChanged += this.ChatGPTView_ZoomFactorChanged;
+
 			// 前回のチャットルームを再開する場合
 			if (this.isChatRoomLeftOffKeep)
 			{
 				// 前回のチャットルームURLが保存されている場合
-				if (this.lastTimeChatRoomUrl.Contains("chatgpt.com/c/"))
+				if (this.lastTimeChatRoomUrl.StartsWith("https://chatgpt.com/c/") || this.lastTimeChatRoomUrl.StartsWith("https://chatgpt.com/share/"))
 				{
 					// 前回のチャットルームURLを読み込み
 					this.chatGPTView.CoreWebView2.Navigate(this.lastTimeChatRoomUrl);
 				}
 				else
 				{
+					// 保存済みのURLを削除
+					this.SetLastTimeChatRoomUrl(string.Empty);
+
 					// ChatGPTのトップページの読み込み
 					this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
 				}
 			}
 			else
 			{
+				// 保存済みのURLを削除
+				this.SetLastTimeChatRoomUrl(string.Empty);
+
 				// ChatGPTのトップページの読み込み
 				this.chatGPTView.CoreWebView2.Navigate("https://chatgpt.com/");
 			}
@@ -635,8 +668,33 @@ namespace ChatGPTExtend
 		/// <param name="e"></param>
 		private void ChatGPTExtend_FormClosing(object sender, FormClosingEventArgs e)
 		{
-			// DeactiveイベントおよびClosingイベント共通処理
-			this.DeactiveAndClosing();
+			// ファイルダウンロード中の場合はメッセージダイアログを表示
+			if (this.fileDownloadingList.Count > 0)
+			{
+				// ファイルダウンロード中メッセージを表示
+				DialogResult dialogResult = MessageBox.Show(
+					"ファイルのダウンロードが進行中です。終了してもよろしいですか？",
+					"確認",
+					MessageBoxButtons.YesNo,
+					MessageBoxIcon.Question);
+
+				// 「はい」選択の場合
+				if (dialogResult.Equals(DialogResult.Yes))
+				{
+					// ファイルダウンロード中リストをクリア
+					this.fileDownloadingList.Clear();
+				}
+				else
+				{
+					// ダウンロードを続行
+					e.Cancel = true;
+					return;
+				}
+
+					// DeactiveイベントおよびClosingイベント共通処理
+					this.DeactiveAndClosing();
+
+			}
 		}
 
 		/// <summary>
@@ -700,7 +758,7 @@ namespace ChatGPTExtend
 			string currentUrl = this.chatGPTView.CoreWebView2.Source;
 
 			// チャットルーム移動時
-			if (currentUrl.Contains("chatgpt.com/c/"))
+			if (currentUrl.StartsWith("https://chatgpt.com/c/") || currentUrl.StartsWith("https://chatgpt.com/share/"))
 			{
 				// チャットルームURLを保持
 				this.SetLastTimeChatRoomUrl(currentUrl);
@@ -729,8 +787,15 @@ namespace ChatGPTExtend
 				// 名前を付けて保存ダイアログでOKクリックの場合
 				if (saveFileDialog.ShowDialog() == DialogResult.OK)
 				{
+					// ファイルダウンロード中リストに追加
+					this.fileDownloadingList.Add(e.DownloadOperation);
+
 					// ダウンロードするファイルの保存先を指定
 					e.ResultFilePath = saveFileDialog.FileName;
+
+					// ダウンロード状態の変更イベントを追加
+					e.DownloadOperation.StateChanged -= this.ChatGPTView_DownloadStateChanged;
+					e.DownloadOperation.StateChanged += this.ChatGPTView_DownloadStateChanged;
 				}
 				else
 				{
@@ -738,6 +803,49 @@ namespace ChatGPTExtend
 					e.Cancel = true;
 				}
 			}
+		}
+
+		/// <summary>
+		/// ChatGPTView_DownloadStateChangedイベント
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void ChatGPTView_DownloadStateChanged(object sender, object e)
+		{
+			// ダウンロード操作状態を取得
+			var download = sender as CoreWebView2DownloadOperation;
+
+			// ダウンロード操作状態が取得できない場合
+			if (download == null)
+			{
+				return;
+			}
+
+			// ダウンロードが完了または中断した場合
+			if (download.State == CoreWebView2DownloadState.Completed ||
+				download.State == CoreWebView2DownloadState.Interrupted)
+			{
+				// ファイルダウンロード中リストにダウンロード操作が含まれている場合
+				if (fileDownloadingList.Contains(download))
+				{
+					// ファイルダウンロード中リストからダウンロード操作を削除	
+					this.fileDownloadingList.Remove(download);
+				}
+
+				// ダウンロード状態の変更イベントを削除
+				download.StateChanged -= this.ChatGPTView_DownloadStateChanged;
+			}
+		}
+
+		/// <summary>
+		/// ChatGPTView_ZoomFactorChangedイベント
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void ChatGPTView_ZoomFactorChanged(object sender, EventArgs e)
+		{
+			// ズーム倍率の記録
+			this.SetZoomFactor(this.chatGPTView.ZoomFactor);
 		}
 
 		#endregion
