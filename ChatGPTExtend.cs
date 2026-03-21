@@ -50,6 +50,9 @@ namespace ChatGPTExtend
 		// 設定JSONファイルのズーム倍率保持用のキー
 		string zoomFactorKey = "ZoomFactor";
 
+		// 設定JSONファイルのDOM削除の要否保持用のキー
+		string domDeleteKey = "DomDelete";
+
 		#endregion
 
 		#region フィールド変数・定数
@@ -77,6 +80,9 @@ namespace ChatGPTExtend
 
 		// 表示サイズを保持
 		private Size sizeKeep = new Size();
+
+		// DOM削除の要否を保持
+		private bool domDeleteKeep = false;
 
 		// ユーザデータ
 		private CoreWebView2Environment chatGPTViewEnvironment;
@@ -164,6 +170,9 @@ namespace ChatGPTExtend
 				// ズーム倍率の読み込み
 				double zoomFactor = data[this.zoomFactorKey].GetDouble();
 
+				// DOM削除要否の読み込み
+				bool domDelete = data[this.domDeleteKey].GetBoolean();
+
 				// Enter押下による改行の要否の保持および設定
 				this.SetEnterLineBreak(enterLineBreak);
 
@@ -184,6 +193,9 @@ namespace ChatGPTExtend
 
 				// ズーム倍率の保持および設定
 				this.SetZoomFactor(zoomFactor);
+
+				// DOM削除の要否の保持および設定
+				this.SetDomDeleteKeep(domDelete);
 			}
 			catch
 			{
@@ -248,6 +260,9 @@ namespace ChatGPTExtend
 
 					// ズーム倍率
 					[this.zoomFactorKey] = this.chatGPTView.ZoomFactor,
+
+					// DOM削除
+					[this.domDeleteKey] = this.domDeleteKeep,
 				};
 
 				// JSON文字列に変換
@@ -396,23 +411,35 @@ namespace ChatGPTExtend
 		}
 
 		/// <summary>
+		/// DOM削除の要否の保持および設定
+		/// </summary>
+		/// <param name="flg"></param>
+		private void SetDomDeleteKeep(bool flg)
+		{
+			this.domDeleteKeep = flg;
+		}
+
+		/// <summary>
 		/// ChatGPTView初期化
 		/// </summary>
 		private async void ChatGPTViewInitialize()
 		{
 			// ユーザデータ保持
-			var options = new CoreWebView2EnvironmentOptions();
-			options.AdditionalBrowserArguments =
-				"--disable-features=msSmartScreenProtection " +
-				"--enable-gpu-rasterization " +
-				"--disable-gpu-shader-disk-cache " +
-				"--disable-background-timer-throttling " +
-				"--process-per-site" +
-				"--enable-features = OverlayScrollbar" +
-				"--disable-features = CalculateNativeWinOcclusion" +
-				"--enable-zero-copy " +
-				"--enable-gpu-memory-buffer-video-frames";
-			this.chatGPTViewEnvironment = await CoreWebView2Environment.CreateAsync(null, "UserData", options);
+			if (this.chatGPTViewEnvironment == null)
+			{
+				var options = new CoreWebView2EnvironmentOptions();
+				options.AdditionalBrowserArguments =
+					"--disable-features=msSmartScreenProtection " +
+					"--enable-gpu-rasterization " +
+					"--disable-gpu-shader-disk-cache " +
+					"--disable-background-timer-throttling " +
+					"--process-per-site" +
+					"--enable-features = OverlayScrollbar" +
+					"--disable-features = CalculateNativeWinOcclusion" +
+					"--enable-zero-copy " +
+					"--enable-gpu-memory-buffer-video-frames";
+				this.chatGPTViewEnvironment = await CoreWebView2Environment.CreateAsync(null, "UserData", options);
+			}
 
 			// chatGPTView.CoreWebview2の初期化
 			await this.chatGPTView.EnsureCoreWebView2Async(chatGPTViewEnvironment);
@@ -446,45 +473,45 @@ namespace ChatGPTExtend
 				");
 			}
 
-			// DOM削除のためのJavaScriptコードをchatGPTViewに追加
-			await this.chatGPTView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
+			// DOM削除を行う場合
+			if (this.domDeleteKeep)
+			{
+				// DOM削除のためのJavaScriptコードをchatGPTViewに追加
+				await this.chatGPTView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
 
-				// DOMContentLoadedイベントのリスナーを追加
-				window.addEventListener('DOMContentLoaded', () => {
+					// DOMContentLoadedイベントのリスナーを追加
+					window.addEventListener('DOMContentLoaded', () => {
 
-					// DOMの変化を監視するMutationObserverを作成
-					const observer = new MutationObserver(() => {
+						// DOMの変化を監視するMutationObserverを作成
+						const observer = new MutationObserver(() => {
 
-						// DOM内容を取得
-						const messages = document.querySelectorAll('[data-message-author-role]');
+							// DOM削除を始めるメッセージ件数
+							const maxCount = 30;
 
-						// メッセージが120件を超えている場合は古いメッセージから非表示
-						if (messages.length > 120) {
-							for (let i = 0; i < messages.length - 120; i++) {
+							// DOM内容を取得
+							const messages = document.querySelectorAll('[data-message-author-role]');
 
-								// メッセージの親要素のarticleタグを取得
-								const container = messages[i].closest('article');
-
-								// articleタグが存在する場合は非表示
-								if(container) {
-									container.style.display = 'none';
+							// メッセージ件数がDOM削除を始めるメッセージ件数を超えている場合は古いメッセージから削除
+							if (messages.length > maxCount) {
+								for (let i = 0; i < messages.length - maxCount; i++) {
+									messages[i].remove();
 								}
 							}
-						}
-					});
+						});
 
-					// DOMの変化を監視
-					observer.observe(document.body, {
+						// DOMの変化を監視
+						observer.observe(document.body, {
 
-						// 子ノードの追加と削除を監視
-						childList: true,
+							// 子ノードの追加と削除を監視
+							childList: true,
 
-						// サブツリー全体の変化を監視
-						subtree: true	
-					});	
+							// サブツリー全体の変化を監視
+							subtree: true	
+						});	
 					
-				});
-			");
+					});
+				");
+			}
 
 			// 開発者ツール無効化
 			this.chatGPTView.CoreWebView2.Settings.AreDevToolsEnabled = false;
@@ -533,15 +560,15 @@ namespace ChatGPTExtend
 					// ChatGPTのトップページの読み込み
 					this.chatGPTView.CoreWebView2.Navigate(CHATGPT_URL);
 				}
-			}
-			else
-			{
-				// 保存済みのURLを削除
-				this.SetLastTimeChatRoomUrl(string.Empty);
 
-				// ChatGPTのトップページの読み込み
-				this.chatGPTView.CoreWebView2.Navigate(CHATGPT_URL);
+				return;
 			}
+
+			// 保存済みのURLを削除
+			this.SetLastTimeChatRoomUrl(string.Empty);
+
+			// ChatGPTのトップページの読み込み
+			this.chatGPTView.CoreWebView2.Navigate(CHATGPT_URL);
 		}
 
 		/// <summary>
