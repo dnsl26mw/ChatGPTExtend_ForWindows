@@ -318,7 +318,13 @@ namespace ChatGPTExtend
 		/// <param name="location"></param>
 		private void SetLocationKeep(Point location)
 		{
-			// 表示位置が画面内に収まっている場合
+			// 保存済みの表示位置のY座標が負の場合は100に置き換え
+			if (location.Y < 0)
+			{
+				location.Y = 100;
+			}
+
+			// 表示位置が画面内に収まっている場合はそれを設定
 			if (this.IsLocationSetTrue(location))
 			{
 				this.Location = location;
