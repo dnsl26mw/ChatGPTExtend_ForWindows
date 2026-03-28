@@ -492,14 +492,14 @@ namespace ChatGPTExtend
 						const observer = new MutationObserver(() => {
 
 							// DOM削除を始めるメッセージ件数
-							const maxCount = 30;
+							const count = 30;
 
 							// DOM内容を取得
 							const messages = document.querySelectorAll('[data-message-author-role]');
 
 							// メッセージ件数がDOM削除を始めるメッセージ件数を超えている場合は古いメッセージから削除
-							if (messages.length > maxCount) {
-								for (let i = 0; i < messages.length - maxCount; i++) {
+							if (messages.length > count) {
+								for (let i = 0; i < messages.length - count; i++) {
 									messages[i].remove();
 								}
 							}

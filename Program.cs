@@ -56,25 +56,34 @@ namespace ChatGPTExtend
 					// ウィンドウを持っている場合
 					if (hWnd != IntPtr.Zero)
 					{
-						// 既存のウィンドウのアクティブ化
-						ShowWindow(hWnd, SW_RESTORE);
+						// 最小化されていた場合はウィンドウの復元
+						if (IsIconic(hWnd))
+						{
+							ShowWindow(hWnd, SW_RESTORE);
+						}
 
 						// 既存のウィンドウを最前面に表示
 						SetForegroundWindow(hWnd);
+
+						break;
 					}
 				}
 			}
 		}
 
-		// ウィンドウのアクティブ化のためのWin32API
+		// 最小化を検知するためのWin32API
+		[DllImport("user32.dll")]
+		private static extern bool IsIconic(IntPtr hWnd);
+
+		// ウィンドウの復元のためのWin32API
 		[DllImport("user32.dll")]
 		private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+		// 最小化・最大化を解除してウィンドウを元の状態に戻す
+		private const int SW_RESTORE = 9;
 
 		// ウィンドウを最前面に表示するためのWin32API
 		[DllImport("user32.dll")]
 		private static extern bool SetForegroundWindow(IntPtr hWnd);
-
-		// ウィンドウの元のサイズ
-		private const int SW_RESTORE = 9;
 	}
 }
