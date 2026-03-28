@@ -33,15 +33,25 @@ namespace ChatGPTExtend
 			this.components = new System.ComponentModel.Container();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChatGPTExtend));
 			this.chatGPTView = new Microsoft.Web.WebView2.WinForms.WebView2();
+			this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
+			this.contextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+			this.line1 = new System.Windows.Forms.ToolStripSeparator();
+			this.dispToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.enterLineBreakToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.domDeleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.chatRoomLeftOffStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.line2 = new System.Windows.Forms.ToolStripSeparator();
+			this.closeStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			((System.ComponentModel.ISupportInitialize)(this.chatGPTView)).BeginInit();
+			this.contextMenu.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// chatGPTView
 			// 
 			this.chatGPTView.AllowExternalDrop = true;
 			this.chatGPTView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-			| System.Windows.Forms.AnchorStyles.Left) 
-			| System.Windows.Forms.AnchorStyles.Right)));
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
 			this.chatGPTView.CreationProperties = null;
 			this.chatGPTView.DefaultBackgroundColor = System.Drawing.Color.White;
 			this.chatGPTView.Location = new System.Drawing.Point(0, 0);
@@ -50,6 +60,68 @@ namespace ChatGPTExtend
 			this.chatGPTView.Size = new System.Drawing.Size(1264, 681);
 			this.chatGPTView.TabIndex = 0;
 			this.chatGPTView.ZoomFactor = 0.88D;
+			// 
+			// notifyIcon
+			// 
+			this.notifyIcon.ContextMenuStrip = this.contextMenu;
+			this.notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon.Icon")));
+			this.notifyIcon.Text = "ChatGPTExtend";
+			this.notifyIcon.Visible = true;
+			// 
+			// contextMenu
+			// 
+			this.contextMenu.DropShadowEnabled = false;
+			this.contextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.dispToolStripMenuItem,
+            this.line1,
+            this.enterLineBreakToolStripMenuItem,
+            this.domDeleteToolStripMenuItem,
+            this.chatRoomLeftOffStripMenuItem,
+			this.line2,
+            this.closeStripMenuItem});
+			this.contextMenu.Name = "contextMenu";
+			this.contextMenu.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
+			this.contextMenu.Size = new System.Drawing.Size(218, 142);
+			// 
+			// dispToolStripMenuItem
+			// 
+			this.dispToolStripMenuItem.Name = "dispToolStripMenuItem";
+			this.dispToolStripMenuItem.Size = new System.Drawing.Size(217, 22);
+			this.dispToolStripMenuItem.Text = "表示";
+			// 
+			// line1
+			// 
+			this.line1.Name = "line1";
+			this.line1.Size = new System.Drawing.Size(214, 6);
+			// 
+			// enterLineBreakToolStripMenuItem
+			// 
+			this.enterLineBreakToolStripMenuItem.Name = "enterLineBreakToolStripMenuItem";
+			this.enterLineBreakToolStripMenuItem.Size = new System.Drawing.Size(217, 22);
+			this.enterLineBreakToolStripMenuItem.Text = "Enter押下で改行";
+			// 
+			// domDeleteToolStripMenuItem
+			// 
+			this.domDeleteToolStripMenuItem.Name = "domDeleteToolStripMenuItem";
+			this.domDeleteToolStripMenuItem.Size = new System.Drawing.Size(217, 22);
+			this.domDeleteToolStripMenuItem.Text = "古いチャットメッセージを非表示";
+			// 
+			// chatRoomLeftOffStripMenuItem
+			// 
+			this.chatRoomLeftOffStripMenuItem.Name = "chatRoomLeftOffStripMenuItem";
+			this.chatRoomLeftOffStripMenuItem.Size = new System.Drawing.Size(217, 22);
+			this.chatRoomLeftOffStripMenuItem.Text = "前回のチャットルームを再開";
+			// 
+			// line2
+			// 
+			this.line2.Name = "line1";
+			this.line2.Size = new System.Drawing.Size(214, 6);
+			// 
+			// closeStripMenuItem
+			// 
+			this.closeStripMenuItem.Name = "closeStripMenuItem";
+			this.closeStripMenuItem.Size = new System.Drawing.Size(217, 22);
+			this.closeStripMenuItem.Text = "終了";
 			// 
 			// ChatGPTExtend
 			// 
@@ -68,6 +140,7 @@ namespace ChatGPTExtend
 			this.SizeChanged += new System.EventHandler(this.ChatGPTExtend_SizeChanged);
 			this.Move += new System.EventHandler(this.ChatGPTExtend_Move);
 			((System.ComponentModel.ISupportInitialize)(this.chatGPTView)).EndInit();
+			this.contextMenu.ResumeLayout(false);
 			this.ResumeLayout(false);
 
 		}
@@ -75,6 +148,15 @@ namespace ChatGPTExtend
 		#endregion
 
 		private Microsoft.Web.WebView2.WinForms.WebView2 chatGPTView;
+		private NotifyIcon notifyIcon;
+		private ContextMenuStrip contextMenu;
+		private ToolStripMenuItem dispToolStripMenuItem;
+		private ToolStripSeparator line1;
+		private ToolStripMenuItem enterLineBreakToolStripMenuItem;
+		private ToolStripMenuItem domDeleteToolStripMenuItem;
+		private ToolStripMenuItem chatRoomLeftOffStripMenuItem;
+		private ToolStripSeparator line2;
+		private ToolStripMenuItem closeStripMenuItem;
 	}
 }
 

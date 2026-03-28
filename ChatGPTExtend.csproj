@@ -117,6 +117,7 @@
     <Compile Include="ChatGPTExtend.Designer.cs">
       <DependentUpon>ChatGPTExtend.cs</DependentUpon>
     </Compile>
+    <Compile Include="ContextMenuRenderer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="ChatGPTExtend.resx">

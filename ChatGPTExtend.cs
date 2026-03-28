@@ -1,8 +1,10 @@
-﻿using Microsoft.Web.WebView2.Core;
+﻿using ChatGPTextend;
+using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -94,6 +96,9 @@ namespace ChatGPTExtend
 		// ダークモード/ライトモードに合わせたタイトルバーの色変更のための定数
 		private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
 
+		private const int DWMWA_NCRENDERING_POLICY = 2;
+		private const int DWMNCRP_ENABLED = 1;
+
 		// ファイルダウンロード中リスト
 		private List<CoreWebView2DownloadOperation> fileDownloadingList = new List<CoreWebView2DownloadOperation>();
 
@@ -108,6 +113,9 @@ namespace ChatGPTExtend
 
 			// デフォルト表示位置を画面中央に設定
 			this.CenterToScreen();
+
+			// 右クリックメニューの描画設定の適用
+			this.SetContextMenuDrawing();
 
 			// 設定の読み込みおよび適用
 			this.ReadSettingsJson();
@@ -127,6 +135,52 @@ namespace ChatGPTExtend
 
 
 		#region メソッド
+
+		/// <summary>
+		/// 右クリックメニュー描画設定の適用
+		/// </summary>
+		private void SetContextMenuDrawing()
+		{
+			// 文字色、背景色を設定
+			this.contextMenu.Renderer = new ContextMenuRenderer();
+
+			// 右クリックメニューの角を丸くする
+			this.ContextMenuRoundCorners(this.contextMenu);
+
+			// 右クリックメニューに影をつける
+			this.ContextMenuAddShadow(this.contextMenu);
+		}
+
+		/// <summary>
+		/// 右クリックメニューの角を丸くする
+		/// </summary>
+		/// <param name="contextMenuStrip"></param>
+		private void ContextMenuRoundCorners(ContextMenuStrip contextMenuStrip)
+		{
+			// 
+			int radius = 8;
+
+			GraphicsPath path = new GraphicsPath();
+			Rectangle rect = new Rectangle(0, 0, contextMenuStrip.Width, contextMenuStrip.Height);
+
+			path.AddArc(rect.X, rect.Y, radius, radius, 180, 90);
+			path.AddArc(rect.Right - radius, rect.Y, radius, radius, 270, 90);
+			path.AddArc(rect.Right - radius, rect.Bottom - radius, radius, radius, 0, 90);
+			path.AddArc(rect.X, rect.Bottom - radius, radius, radius, 90, 90);
+			path.CloseFigure();
+
+			contextMenuStrip.Region = new Region(path);
+		}
+
+		/// <summary>
+		/// 右クリックメニューに影をつける
+		/// </summary>
+		/// <param name="menu"></param>
+		private void ContextMenuAddShadow(ContextMenuStrip menu)
+		{
+			int val = DWMNCRP_ENABLED;
+			DwmSetWindowAttribute(menu.Handle, DWMWA_NCRENDERING_POLICY, ref val, sizeof(int));
+		}
 
 		/// <summary>
 		/// 設定JSONファイルの読み込み
