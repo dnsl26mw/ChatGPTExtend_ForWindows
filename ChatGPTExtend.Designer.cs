@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using Microsoft.Web.WebView2.Core;
+using System.Windows.Forms;
 
 namespace ChatGPTExtend
 {
@@ -35,8 +36,8 @@ namespace ChatGPTExtend
 			this.chatGPTView = new Microsoft.Web.WebView2.WinForms.WebView2();
 			this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
 			this.contextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-			this.line1 = new System.Windows.Forms.ToolStripSeparator();
 			this.dispToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.line1 = new System.Windows.Forms.ToolStripSeparator();
 			this.enterLineBreakToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.domDeleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.chatRoomLeftOffStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -67,6 +68,7 @@ namespace ChatGPTExtend
 			this.notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon.Icon")));
 			this.notifyIcon.Text = "ChatGPTExtend";
 			this.notifyIcon.Visible = true;
+			this.notifyIcon.MouseUp += new System.Windows.Forms.MouseEventHandler(this.NotifyIcon_MouseUp);
 			// 
 			// contextMenu
 			// 
@@ -77,17 +79,18 @@ namespace ChatGPTExtend
             this.enterLineBreakToolStripMenuItem,
             this.domDeleteToolStripMenuItem,
             this.chatRoomLeftOffStripMenuItem,
-			this.line2,
+            this.line2,
             this.closeStripMenuItem});
 			this.contextMenu.Name = "contextMenu";
 			this.contextMenu.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
-			this.contextMenu.Size = new System.Drawing.Size(218, 142);
+			this.contextMenu.Size = new System.Drawing.Size(218, 148);
 			// 
 			// dispToolStripMenuItem
 			// 
 			this.dispToolStripMenuItem.Name = "dispToolStripMenuItem";
 			this.dispToolStripMenuItem.Size = new System.Drawing.Size(217, 22);
 			this.dispToolStripMenuItem.Text = "表示";
+			this.dispToolStripMenuItem.Click += new System.EventHandler(this.ContextDispMenu_Click);
 			// 
 			// line1
 			// 
@@ -114,7 +117,7 @@ namespace ChatGPTExtend
 			// 
 			// line2
 			// 
-			this.line2.Name = "line1";
+			this.line2.Name = "line2";
 			this.line2.Size = new System.Drawing.Size(214, 6);
 			// 
 			// closeStripMenuItem

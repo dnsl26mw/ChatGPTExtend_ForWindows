@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Windows.Forms;
@@ -86,6 +87,9 @@ namespace ChatGPTExtend
 		// DOM削除の要否を保持
 		private bool domDeleteKeep = false;
 
+		// 最大化で再表示フラグ
+		private bool maximizeReDispFlg = false;
+
 		// ユーザデータ
 		private CoreWebView2Environment chatGPTViewEnvironment;
 
@@ -146,9 +150,6 @@ namespace ChatGPTExtend
 
 			// 右クリックメニューの角を丸くする
 			this.ContextMenuRoundCorners(this.contextMenu);
-
-			// 右クリックメニューに影をつける
-			this.ContextMenuAddShadow(this.contextMenu);
 		}
 
 		/// <summary>
@@ -170,16 +171,6 @@ namespace ChatGPTExtend
 			path.CloseFigure();
 
 			contextMenuStrip.Region = new Region(path);
-		}
-
-		/// <summary>
-		/// 右クリックメニューに影をつける
-		/// </summary>
-		/// <param name="menu"></param>
-		private void ContextMenuAddShadow(ContextMenuStrip menu)
-		{
-			int val = DWMNCRP_ENABLED;
-			DwmSetWindowAttribute(menu.Handle, DWMWA_NCRENDERING_POLICY, ref val, sizeof(int));
 		}
 
 		/// <summary>
@@ -449,6 +440,9 @@ namespace ChatGPTExtend
 		/// <param name="flg"></param>
 		private void SetMaximize(bool flg)
 		{
+			// 最大化で再表示フラグを設定
+			this.maximizeReDispFlg = flg;
+
 			// 最大化する場合
 			if (flg)
 			{
@@ -645,12 +639,50 @@ namespace ChatGPTExtend
 		/// </summary>
 		private void MoveAndSizeChanged()
 		{
-			// 最小化および最大化でない場合は保持
+			// 最小化および最大化でない場合
 			if (this.WindowState == FormWindowState.Normal)
 			{
+				// 表示サイズの保持
 				this.sizeKeep = this.Size;
+
+				// 表示位置の保持
 				this.locationKeep = this.Location;
+
+				// 最大化で再表示フラグを落とす
+				this.maximizeReDispFlg = false;
+
+				return;
 			}
+
+			// 最大化の場合
+			if (this.WindowState == FormWindowState.Maximized)
+			{
+				// 最大化で再表示フラグを立てる	
+				this.maximizeReDispFlg = true;
+
+				return;
+			}
+		}
+
+		/// <summary>
+		/// NotifyIcon_MouseUpイベントおよびContextDispMenu_Clickイベント共通処理
+		/// </summary>
+		private void NotifyIconClickAndDispMenuClickCommonProc()
+		{
+			// 最大化で再表示フラグがtrue
+			if (this.maximizeReDispFlg)
+			{
+				// 最大化で再表示
+				this.WindowState = FormWindowState.Maximized;
+			}
+			else
+			{
+				// 通常ウィンドウで再表示
+				this.WindowState = FormWindowState.Normal;
+			}
+
+			// 自画面をアクティブ化
+			this.Activate();
 		}
 
 		/// <summary>
@@ -943,6 +975,32 @@ namespace ChatGPTExtend
 		{
 			// ズーム倍率の設定
 			this.SetZoomFactor(this.chatGPTView.ZoomFactor);
+		}
+
+		/// <summary>
+		/// NotifyIcon_MouseUpイベント
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void NotifyIcon_MouseUp(object sender, MouseEventArgs e)
+		{
+			// 左クリックの場合のみ処理
+			if (e.Button == MouseButtons.Left)
+			{
+				// NotifyIcon_MouseUpイベントおよびContextDispMenu_Clickイベント共通処理
+				this.NotifyIconClickAndDispMenuClickCommonProc();
+			}
+		}
+
+		/// <summary>
+		/// ContextDispMenu_Clickイベント
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void ContextDispMenu_Click(object sender, EventArgs e)
+		{
+			// NotifyIcon_MouseUpイベントおよびContextDispMenu_Clickイベント共通処理
+			this.NotifyIconClickAndDispMenuClickCommonProc();
 		}
 
 		#endregion

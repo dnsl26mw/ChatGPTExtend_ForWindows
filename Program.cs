@@ -1,8 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
-using System.Runtime.InteropServices;
-using System.Diagnostics;
 
 namespace ChatGPTExtend
 {
@@ -13,6 +13,21 @@ namespace ChatGPTExtend
 
 		// ミューテックス
 		private static Mutex mutex;
+
+		// 最小化を検知するためのWin32API
+		[DllImport("user32.dll")]
+		private static extern bool IsIconic(IntPtr hWnd);
+
+		// ウィンドウの復元のためのWin32API
+		[DllImport("user32.dll")]
+		private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+		// 最小化・最大化を解除してウィンドウを元の状態に戻す
+		private const int SW_RESTORE = 9;
+
+		// ウィンドウを最前面に表示するためのWin32API
+		[DllImport("user32.dll")]
+		private static extern bool SetForegroundWindow(IntPtr hWnd);
 
 		/// <summary>
 		/// アプリケーションのメイン エントリ ポイントです。
@@ -50,7 +65,7 @@ namespace ChatGPTExtend
 				// 自分自身のプロセスではない場合
 				if (proc.Id != current.Id)
 				{
-					// そのプロセスのメインウィンドウのハンドル取得
+					// メインウィンドウのハンドル取得
 					IntPtr hWnd = proc.MainWindowHandle;
 
 					// ウィンドウを持っている場合
@@ -70,20 +85,5 @@ namespace ChatGPTExtend
 				}
 			}
 		}
-
-		// 最小化を検知するためのWin32API
-		[DllImport("user32.dll")]
-		private static extern bool IsIconic(IntPtr hWnd);
-
-		// ウィンドウの復元のためのWin32API
-		[DllImport("user32.dll")]
-		private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-
-		// 最小化・最大化を解除してウィンドウを元の状態に戻す
-		private const int SW_RESTORE = 9;
-
-		// ウィンドウを最前面に表示するためのWin32API
-		[DllImport("user32.dll")]
-		private static extern bool SetForegroundWindow(IntPtr hWnd);
 	}
 }
