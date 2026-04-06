@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Windows.Forms;
@@ -52,9 +51,6 @@ namespace ChatGPTExtend
 
 		// 設定JSONファイルのズーム倍率保持用のキー
 		string zoomFactorKey = "ZoomFactor";
-
-		// 設定JSONファイルのDOM削除の要否保持用のキー
-		string domDeleteKey = "DomDelete";
 
 		#endregion
 
@@ -118,11 +114,11 @@ namespace ChatGPTExtend
 			// デフォルト表示位置を画面中央に設定
 			this.CenterToScreen();
 
-			// 右クリックメニューの描画設定の適用
-			this.SetContextMenuDrawing();
-
 			// 設定の読み込みおよび適用
 			this.ReadSettingsJson();
+
+			// 右クリックメニューの描画設定の適用
+			this.SetContextMenuDrawing();
 
 			// ChatGPTView初期化
 			this.ChatGPTViewInitialize();
@@ -148,29 +144,11 @@ namespace ChatGPTExtend
 			// 文字色、背景色を設定
 			this.contextMenu.Renderer = new ContextMenuRenderer();
 
-			// 右クリックメニューの角を丸くする
-			this.ContextMenuRoundCorners(this.contextMenu);
-		}
+			// 右クリックメニューのEnter押下による改行の要否のチェックマークを設定
+			this.SetContextMenuCheckMark(this.enterLineBreakToolStripMenuItem, this.isEnterLineBreakKeep);
 
-		/// <summary>
-		/// 右クリックメニューの角を丸くする
-		/// </summary>
-		/// <param name="contextMenuStrip"></param>
-		private void ContextMenuRoundCorners(ContextMenuStrip contextMenuStrip)
-		{
-			// 
-			int radius = 8;
-
-			GraphicsPath path = new GraphicsPath();
-			Rectangle rect = new Rectangle(0, 0, contextMenuStrip.Width, contextMenuStrip.Height);
-
-			path.AddArc(rect.X, rect.Y, radius, radius, 180, 90);
-			path.AddArc(rect.Right - radius, rect.Y, radius, radius, 270, 90);
-			path.AddArc(rect.Right - radius, rect.Bottom - radius, radius, radius, 0, 90);
-			path.AddArc(rect.X, rect.Bottom - radius, radius, radius, 90, 90);
-			path.CloseFigure();
-
-			contextMenuStrip.Region = new Region(path);
+			// 右クリックメニューの前回のチャットルームを再開の要否のチェックマークを設定
+			this.SetContextMenuCheckMark(this.chatRoomLeftOffStripMenuItem, this.isChatRoomLeftOffKeep);
 		}
 
 		/// <summary>
@@ -215,9 +193,6 @@ namespace ChatGPTExtend
 				// ズーム倍率の読み込み
 				double zoomFactor = data[this.zoomFactorKey].GetDouble();
 
-				// DOM削除要否の読み込み
-				bool domDelete = data[this.domDeleteKey].GetBoolean();
-
 				// Enter押下による改行の要否の保持および設定
 				this.SetEnterLineBreak(enterLineBreak);
 
@@ -238,9 +213,6 @@ namespace ChatGPTExtend
 
 				// ズーム倍率の保持および設定
 				this.SetZoomFactor(zoomFactor);
-
-				// DOM削除の要否の保持および設定
-				this.SetDomDeleteKeep(domDelete);
 			}
 			catch
 			{
@@ -304,10 +276,7 @@ namespace ChatGPTExtend
 					[this.isMaximizedKey] = this.WindowState == FormWindowState.Maximized,
 
 					// ズーム倍率
-					[this.zoomFactorKey] = this.chatGPTView.ZoomFactor,
-
-					// DOM削除
-					[this.domDeleteKey] = this.domDeleteKeep,
+					[this.zoomFactorKey] = this.chatGPTView.ZoomFactor
 				};
 
 				// JSON文字列に変換
@@ -345,28 +314,15 @@ namespace ChatGPTExtend
 		}
 
 		/// <summary>
-		/// 前回のチャットルームURLの保持および設定
-		/// </summary>
-		/// <param name="url"></param>
-		private void SetLastTimeChatRoomUrl(string url)
-		{
-			// 前回のチャットルームを再開する場合
-			if (this.isChatRoomLeftOffKeep)
-			{
-				this.lastTimeChatRoomUrl = url;
-			}
-		}
-
-		/// <summary>
 		/// 表示位置の保持および設定
 		/// </summary>
 		/// <param name="location"></param>
 		private void SetLocationKeep(Point location)
 		{
-			// 保存済みの表示位置のY座標が負の場合は100に置き換え
+			// 保存済みの表示位置のY座標が負の場合は0に置き換え
 			if (location.Y < 0)
 			{
-				location.Y = 100;
+				location.Y = 0;
 			}
 
 			// 表示位置が画面内に収まっている場合はそれを設定
@@ -502,70 +458,22 @@ namespace ChatGPTExtend
 			this.chatGPTView.CoreWebView2.WebMessageReceived -= ChatGPTView_WebMessageReceived;
 			this.chatGPTView.CoreWebView2.WebMessageReceived += ChatGPTView_WebMessageReceived;
 
-			// Enter押下による改行を行う場合
-			if (this.isEnterLineBreakKeep)
-			{
-				// Enter押下による改行有効化のためのJavaScriptコードをchatGPTViewに追加
-				await this.chatGPTView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
+			// Enter押下による改行有効化設定の変更を監視するJavaScriptコードをchatGPTViewに追加
+			await chatGPTView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
+				
+				window.__enterLineBreakEnabled = false;
 
-					// キー押下イベントのリスナーを追加
-					window.addEventListener('keydown', function(e) {
-					
-						// Enter押下の場合
-						if (e.key === 'Enter' && !e.altKey && !e.shiftKey && !e.ctrlKey) {
+				window.addEventListener('keydown', function(e) {
 
-							// デフォルトのEnter押下動作を無効化
-							e.preventDefault();
+					if(!window.__enterLineBreakEnabled) return;
 
-							// キー押下メッセージを送信
-							e.stopPropagation();
-
-							// C#側にEnter押下を通知
-							chrome.webview.postMessage('enter');
-						}
-					}, true);
-				");
-			}
-
-			// DOM削除を行う場合
-			if (this.domDeleteKeep)
-			{
-				// DOM削除のためのJavaScriptコードをchatGPTViewに追加
-				await this.chatGPTView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
-
-					// DOMContentLoadedイベントのリスナーを追加
-					window.addEventListener('DOMContentLoaded', () => {
-
-						// DOMの変化を監視するMutationObserverを作成
-						const observer = new MutationObserver(() => {
-
-							// DOM削除を始めるメッセージ件数
-							const count = 30;
-
-							// DOM内容を取得
-							const messages = document.querySelectorAll('[data-message-author-role]');
-
-							// メッセージ件数がDOM削除を始めるメッセージ件数を超えている場合は古いメッセージから削除
-							if (messages.length > count) {
-								for (let i = 0; i < messages.length - count; i++) {
-									messages[i].remove();
-								}
-							}
-						});
-
-						// DOMの変化を監視
-						observer.observe(document.body, {
-
-							// 子ノードの追加と削除を監視
-							childList: true,
-
-							// サブツリー全体の変化を監視
-							subtree: true	
-						});	
-					
-					});
-				");
-			}
+					if (e.key === 'Enter' && !e.altKey && !e.shiftKey && !e.ctrlKey) {
+						e.preventDefault();
+						e.stopPropagation();
+						chrome.webview.postMessage('enter');
+					}
+				}, true);
+			");
 
 			// 開発者ツール無効化
 			this.chatGPTView.CoreWebView2.Settings.AreDevToolsEnabled = false;
@@ -595,34 +503,64 @@ namespace ChatGPTExtend
 			this.chatGPTView.ZoomFactorChanged -= this.ChatGPTView_ZoomFactorChanged;
 			this.chatGPTView.ZoomFactorChanged += this.ChatGPTView_ZoomFactorChanged;
 
+			// ナビゲーション完了時の処理
+			this.chatGPTView.NavigationCompleted -= this.ChatGPTView_NavigationCompleted;
+			this.chatGPTView.NavigationCompleted += this.ChatGPTView_NavigationCompleted;
+
 			// 前回のチャットルームを再開する場合
 			if (this.isChatRoomLeftOffKeep)
 			{
-				// 前回のチャットルームURLが保存されている場合
-				if (this.lastTimeChatRoomUrl.StartsWith(CHATGPT_CHAT_ROOM_URL_HEAD) || 
-					this.lastTimeChatRoomUrl.StartsWith(CHATGPT_SHARED_CHAT_URL_HEAD) || 
-					this.lastTimeChatRoomUrl.Equals(CHATGPT_URL))
-				{
-					// 前回のチャットルームURLを読み込み
-					this.chatGPTView.CoreWebView2.Navigate(this.lastTimeChatRoomUrl);
-				}
-				else
-				{
-					// 保存済みのURLを削除
-					this.SetLastTimeChatRoomUrl(string.Empty);
-
-					// ChatGPTのトップページの読み込み
-					this.chatGPTView.CoreWebView2.Navigate(CHATGPT_URL);
-				}
+				// 保持している前回のチャットルームのURLの読み込み
+				this.chatGPTView.CoreWebView2.Navigate(this.lastTimeChatRoomUrl);
 
 				return;
 			}
 
-			// 保存済みのURLを削除
-			this.SetLastTimeChatRoomUrl(string.Empty);
-
 			// ChatGPTのトップページの読み込み
 			this.chatGPTView.CoreWebView2.Navigate(CHATGPT_URL);
+		}
+
+		/// <summary>
+		/// Enter押下による改行有効化のためのJavaScriptコードをchatGPTViewに追加
+		/// </summary>
+		private async void SetEnterLineBreakJs()
+		{
+			// Enter押下による改行を有効化する場合
+			if (this.isEnterLineBreakKeep)
+			{
+				await this.chatGPTView.CoreWebView2.ExecuteScriptAsync(
+					"window.__enterLineBreakEnabled = true;"
+				);
+			}
+			// Enter押下による改行を有効化しない場合
+			else
+			{
+				await this.chatGPTView.CoreWebView2.ExecuteScriptAsync(
+					"window.__enterLineBreakEnabled = false;"
+				);
+			}
+		}
+
+		/// <summary>
+		/// 保持対象のURLかどうかを判定
+		/// </summary>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		private bool IsKeepUrl(string url)
+		{
+			// URLがnullまたは空文字列の場合は保持対象としない
+			if (string.IsNullOrEmpty(url))
+			{
+				return false;
+			}
+
+			// URLがChatGPTのチャットルームのURLの先頭部分、または共有チャットのURLの先頭部分、またはChatGPTのURLで始まっていない場合は保持対象としない
+			if (!(url.StartsWith(CHATGPT_CHAT_ROOM_URL_HEAD) || url.StartsWith(CHATGPT_SHARED_CHAT_URL_HEAD) || url.Equals(CHATGPT_URL)))
+			{
+				return false;
+			}
+
+			return true;
 		}
 
 		/// <summary>
@@ -683,6 +621,32 @@ namespace ChatGPTExtend
 
 			// 自画面をアクティブ化
 			this.Activate();
+		}
+
+		/// <summary>
+		/// URL保持の共通処理
+		/// </summary>
+		private void SetLastTimeChatRoomUrl(string url)
+		{
+			// 前回のチャットルームを再開する場合
+			if (isChatRoomLeftOffKeep)
+			{
+				// URLがnullまたは空文字列の場合、またはURLが保持対象でない場合
+				if (string.IsNullOrEmpty(url) || !this.IsKeepUrl(url))
+				{
+					// 空文字列を保持
+					url = string.Empty;
+				}
+			}
+			// 前回のチャットルームを再開しない場合
+			else
+			{
+				// 空文字列を保持
+				url = string.Empty;
+			}
+
+			// URLを保持
+			this.lastTimeChatRoomUrl = url;
 		}
 
 		/// <summary>
@@ -755,6 +719,27 @@ namespace ChatGPTExtend
 			}
 		}
 
+		/// <summary>
+		/// チェックマークの設定
+		/// </summary>
+		/// <param name="toolStripMenuItem"></param>
+		/// <param name="flg"></param>
+		private void SetContextMenuCheckMark(ToolStripMenuItem toolStripMenuItem, bool flg)
+		{
+			// フラグがtrueの場合
+			if (flg)
+			{
+				// チェックマークアイコンを設定
+				toolStripMenuItem.Image = ChatGPTextend.Properties.Resources.CheckMark;
+			}
+			// フラグがfalseの場合
+			else
+			{
+				// チェックマークアイコンを削除
+				toolStripMenuItem.Image = null;
+			}
+		}
+
 		#endregion
 
 		#region イベント
@@ -818,10 +803,10 @@ namespace ChatGPTExtend
 					return;
 				}
 
-				// ChatGPTExtend_DeactiveイベントおよびChatGPTExtend_FormClosingイベント共通処理
-				this.DeactiveAndClosing();
-
 			}
+
+			// ChatGPTExtend_DeactiveイベントおよびChatGPTExtend_FormClosingイベント共通処理
+			this.DeactiveAndClosing();
 		}
 
 		/// <summary>
@@ -884,14 +869,19 @@ namespace ChatGPTExtend
 			// 現在のURLを取得
 			string currentUrl = this.chatGPTView.CoreWebView2.Source;
 
-			// チャットルーム移動時
-			if (currentUrl.StartsWith(CHATGPT_CHAT_ROOM_URL_HEAD) || 
-				currentUrl.StartsWith(CHATGPT_SHARED_CHAT_URL_HEAD) || 
-				currentUrl.Equals(CHATGPT_URL))
-			{
-				// チャットルームURLを保持
-				this.SetLastTimeChatRoomUrl(currentUrl);
-			}
+			// URL保持の共通処理
+			this.SetLastTimeChatRoomUrl(currentUrl);
+		}
+
+		/// <summary>
+		/// ChatGPTView_NavigationCompletedイベント
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void ChatGPTView_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
+		{
+			// Enter押下による改行の有効化設定の切り替え
+			this.SetEnterLineBreakJs();
 		}
 
 		/// <summary>
@@ -1003,6 +993,61 @@ namespace ChatGPTExtend
 			this.NotifyIconClickAndDispMenuClickCommonProc();
 		}
 
-		#endregion
+		/// <summary>
+		/// ContextEnterLineBreakMenu_Clickイベント
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void ContextEnterLineBreakMenu_Click(object sender, EventArgs e)
+		{
+			// エンター押下による改行の要否を反転
+			this.isEnterLineBreakKeep = !this.isEnterLineBreakKeep;
+
+			// Enter押下による改行の有効化設定の切り替え
+			this.SetEnterLineBreakJs();
+
+			// チェックマークの設定
+			this.SetContextMenuCheckMark(this.enterLineBreakToolStripMenuItem, this.isEnterLineBreakKeep);
+		}
+
+		/// <summary>
+		/// ContextChatRoomLeftOffMenu_Clickイベント
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void ContextChatRoomLeftOffMenu_Click(object sender, EventArgs e)
+		{
+			// 前回のチャットルームを再開の要否を反転
+			this.isChatRoomLeftOffKeep = !this.isChatRoomLeftOffKeep;
+
+			// 現在のURL取得用変数
+			string currentUrl = string.Empty;
+
+			// 前回のチャットルームを再開する場合
+			if (this.isChatRoomLeftOffKeep)
+			{
+				// 現在のURLを取得
+				currentUrl = this.chatGPTView.CoreWebView2.Source;
+			}
+
+			// URL保持の共通処理
+			this.SetLastTimeChatRoomUrl(currentUrl);
+
+			// チェックマークの設定
+			this.SetContextMenuCheckMark(this.chatRoomLeftOffStripMenuItem, this.isChatRoomLeftOffKeep);
+		}
+
+		/// <summary>
+		/// ContextCloseMenu_Clickイベント
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void ContextCloseMenu_Click(object sender, EventArgs e)
+		{
+			// 終了
+			this.Close();
+		}
 	}
+
+	#endregion
 }

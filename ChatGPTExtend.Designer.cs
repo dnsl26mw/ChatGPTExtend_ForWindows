@@ -39,7 +39,6 @@ namespace ChatGPTExtend
 			this.dispToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.line1 = new System.Windows.Forms.ToolStripSeparator();
 			this.enterLineBreakToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.domDeleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.chatRoomLeftOffStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.line2 = new System.Windows.Forms.ToolStripSeparator();
 			this.closeStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -77,54 +76,54 @@ namespace ChatGPTExtend
             this.dispToolStripMenuItem,
             this.line1,
             this.enterLineBreakToolStripMenuItem,
-            this.domDeleteToolStripMenuItem,
             this.chatRoomLeftOffStripMenuItem,
             this.line2,
             this.closeStripMenuItem});
 			this.contextMenu.Name = "contextMenu";
 			this.contextMenu.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
-			this.contextMenu.Size = new System.Drawing.Size(218, 148);
+			this.contextMenu.Size = new System.Drawing.Size(217, 126);
 			// 
 			// dispToolStripMenuItem
 			// 
+			this.dispToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
 			this.dispToolStripMenuItem.Name = "dispToolStripMenuItem";
-			this.dispToolStripMenuItem.Size = new System.Drawing.Size(217, 22);
+			this.dispToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
 			this.dispToolStripMenuItem.Text = "表示";
 			this.dispToolStripMenuItem.Click += new System.EventHandler(this.ContextDispMenu_Click);
 			// 
 			// line1
 			// 
 			this.line1.Name = "line1";
-			this.line1.Size = new System.Drawing.Size(214, 6);
+			this.line1.Size = new System.Drawing.Size(213, 6);
 			// 
 			// enterLineBreakToolStripMenuItem
 			// 
+			this.enterLineBreakToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
 			this.enterLineBreakToolStripMenuItem.Name = "enterLineBreakToolStripMenuItem";
-			this.enterLineBreakToolStripMenuItem.Size = new System.Drawing.Size(217, 22);
+			this.enterLineBreakToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
 			this.enterLineBreakToolStripMenuItem.Text = "Enter押下で改行";
-			// 
-			// domDeleteToolStripMenuItem
-			// 
-			this.domDeleteToolStripMenuItem.Name = "domDeleteToolStripMenuItem";
-			this.domDeleteToolStripMenuItem.Size = new System.Drawing.Size(217, 22);
-			this.domDeleteToolStripMenuItem.Text = "古いチャットメッセージを非表示";
+			this.enterLineBreakToolStripMenuItem.Click += new System.EventHandler(this.ContextEnterLineBreakMenu_Click);
 			// 
 			// chatRoomLeftOffStripMenuItem
 			// 
+			this.chatRoomLeftOffStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
 			this.chatRoomLeftOffStripMenuItem.Name = "chatRoomLeftOffStripMenuItem";
-			this.chatRoomLeftOffStripMenuItem.Size = new System.Drawing.Size(217, 22);
+			this.chatRoomLeftOffStripMenuItem.Size = new System.Drawing.Size(216, 22);
 			this.chatRoomLeftOffStripMenuItem.Text = "前回のチャットルームを再開";
+			this.chatRoomLeftOffStripMenuItem.Click += new System.EventHandler(this.ContextChatRoomLeftOffMenu_Click);
 			// 
 			// line2
 			// 
 			this.line2.Name = "line2";
-			this.line2.Size = new System.Drawing.Size(214, 6);
+			this.line2.Size = new System.Drawing.Size(213, 6);
 			// 
 			// closeStripMenuItem
 			// 
+			this.closeStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
 			this.closeStripMenuItem.Name = "closeStripMenuItem";
-			this.closeStripMenuItem.Size = new System.Drawing.Size(217, 22);
+			this.closeStripMenuItem.Size = new System.Drawing.Size(216, 22);
 			this.closeStripMenuItem.Text = "終了";
+			this.closeStripMenuItem.Click += new System.EventHandler(this.ContextCloseMenu_Click);
 			// 
 			// ChatGPTExtend
 			// 
@@ -156,7 +155,6 @@ namespace ChatGPTExtend
 		private ToolStripMenuItem dispToolStripMenuItem;
 		private ToolStripSeparator line1;
 		private ToolStripMenuItem enterLineBreakToolStripMenuItem;
-		private ToolStripMenuItem domDeleteToolStripMenuItem;
 		private ToolStripMenuItem chatRoomLeftOffStripMenuItem;
 		private ToolStripSeparator line2;
 		private ToolStripMenuItem closeStripMenuItem;
