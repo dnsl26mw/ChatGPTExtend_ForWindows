@@ -126,7 +126,7 @@ namespace ChatGPTExtend
 			// ReloadStripMenuItem
 			// 
 			this.reloadStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
-			this.reloadStripMenuItem.Name = "chatRoomLeftOffStripMenuItem";
+			this.reloadStripMenuItem.Name = "reloadStripMenuItem";
 			this.reloadStripMenuItem.Size = new System.Drawing.Size(216, 22);
 			this.reloadStripMenuItem.Height = 28;
 			this.reloadStripMenuItem.Text = "再読み込み";

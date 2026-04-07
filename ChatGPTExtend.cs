@@ -1007,6 +1007,9 @@ namespace ChatGPTExtend
 
 			// チェックマークの設定
 			this.SetContextMenuCheckMark(this.enterLineBreakToolStripMenuItem, this.isEnterLineBreakKeep);
+
+			// アクティブ化
+			this.Activate();
 		}
 
 		/// <summary>
@@ -1034,6 +1037,9 @@ namespace ChatGPTExtend
 
 			// チェックマークの設定
 			this.SetContextMenuCheckMark(this.chatRoomLeftOffStripMenuItem, this.isChatRoomLeftOffKeep);
+
+			// アクティブ化
+			this.Activate();
 		}
 
 		/// <summary>
@@ -1045,6 +1051,9 @@ namespace ChatGPTExtend
 		{
 			// 再読み込み
 			this.chatGPTView.CoreWebView2.Reload();
+
+			// アクティブ化
+			this.Activate();
 		}
 
 		/// <summary>
