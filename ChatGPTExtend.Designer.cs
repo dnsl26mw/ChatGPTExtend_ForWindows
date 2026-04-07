@@ -41,6 +41,8 @@ namespace ChatGPTExtend
 			this.enterLineBreakToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.chatRoomLeftOffStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.line2 = new System.Windows.Forms.ToolStripSeparator();
+			this.reloadStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.line3 = new System.Windows.Forms.ToolStripSeparator();
 			this.closeStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			((System.ComponentModel.ISupportInitialize)(this.chatGPTView)).BeginInit();
 			this.contextMenu.SuspendLayout();
@@ -78,7 +80,9 @@ namespace ChatGPTExtend
             this.enterLineBreakToolStripMenuItem,
             this.chatRoomLeftOffStripMenuItem,
             this.line2,
-            this.closeStripMenuItem});
+			this.reloadStripMenuItem,
+			this.line3,
+			this.closeStripMenuItem});
 			this.contextMenu.Name = "contextMenu";
 			this.contextMenu.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
 			this.contextMenu.Size = new System.Drawing.Size(217, 126);
@@ -101,6 +105,7 @@ namespace ChatGPTExtend
 			this.enterLineBreakToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
 			this.enterLineBreakToolStripMenuItem.Name = "enterLineBreakToolStripMenuItem";
 			this.enterLineBreakToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
+			this.enterLineBreakToolStripMenuItem.Height = 28;
 			this.enterLineBreakToolStripMenuItem.Text = "Enter押下で改行";
 			this.enterLineBreakToolStripMenuItem.Click += new System.EventHandler(this.ContextEnterLineBreakMenu_Click);
 			// 
@@ -109,7 +114,8 @@ namespace ChatGPTExtend
 			this.chatRoomLeftOffStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
 			this.chatRoomLeftOffStripMenuItem.Name = "chatRoomLeftOffStripMenuItem";
 			this.chatRoomLeftOffStripMenuItem.Size = new System.Drawing.Size(216, 22);
-			this.chatRoomLeftOffStripMenuItem.Text = "前回のチャットルームを再開";
+			this.chatRoomLeftOffStripMenuItem.Height = 28;
+			this.chatRoomLeftOffStripMenuItem.Text = "起動時に前回開いたチャットを開く";
 			this.chatRoomLeftOffStripMenuItem.Click += new System.EventHandler(this.ContextChatRoomLeftOffMenu_Click);
 			// 
 			// line2
@@ -117,11 +123,26 @@ namespace ChatGPTExtend
 			this.line2.Name = "line2";
 			this.line2.Size = new System.Drawing.Size(213, 6);
 			// 
+			// ReloadStripMenuItem
+			// 
+			this.reloadStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
+			this.reloadStripMenuItem.Name = "chatRoomLeftOffStripMenuItem";
+			this.reloadStripMenuItem.Size = new System.Drawing.Size(216, 22);
+			this.reloadStripMenuItem.Height = 28;
+			this.reloadStripMenuItem.Text = "再読み込み";
+			this.reloadStripMenuItem.Click += new System.EventHandler(this.ContextReloadMenu_Click);
+			// 
+			// line3
+			// 
+			this.line3.Name = "line3";
+			this.line3.Size = new System.Drawing.Size(213, 6);
+			// 
 			// closeStripMenuItem
 			// 
 			this.closeStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 9F);
 			this.closeStripMenuItem.Name = "closeStripMenuItem";
 			this.closeStripMenuItem.Size = new System.Drawing.Size(216, 22);
+			this.closeStripMenuItem.Height = 28;
 			this.closeStripMenuItem.Text = "終了";
 			this.closeStripMenuItem.Click += new System.EventHandler(this.ContextCloseMenu_Click);
 			// 
@@ -157,6 +178,8 @@ namespace ChatGPTExtend
 		private ToolStripMenuItem enterLineBreakToolStripMenuItem;
 		private ToolStripMenuItem chatRoomLeftOffStripMenuItem;
 		private ToolStripSeparator line2;
+		private ToolStripMenuItem reloadStripMenuItem;
+		private ToolStripSeparator line3;
 		private ToolStripMenuItem closeStripMenuItem;
 	}
 }

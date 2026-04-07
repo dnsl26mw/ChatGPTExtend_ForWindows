@@ -1041,6 +1041,17 @@ namespace ChatGPTExtend
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
+		private void ContextReloadMenu_Click(object sender, EventArgs e)
+		{
+			// 再読み込み
+			this.chatGPTView.CoreWebView2.Reload();
+		}
+
+		/// <summary>
+		/// ContextCloseMenu_Clickイベント
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
 		private void ContextCloseMenu_Click(object sender, EventArgs e)
 		{
 			// 終了
