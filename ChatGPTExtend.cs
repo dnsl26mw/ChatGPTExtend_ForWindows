@@ -443,8 +443,8 @@ namespace ChatGPTExtend
 					"--disable-gpu-shader-disk-cache " +
 					"--disable-background-timer-throttling " +
 					"--process-per-site" +
-					"--enable-features = OverlayScrollbar" +
-					"--disable-features = CalculateNativeWinOcclusion" +
+					"--enable-features=OverlayScrollbar" +
+					"--disable-features=CalculateNativeWinOcclusion" +
 					"--enable-zero-copy " +
 					"--enable-gpu-memory-buffer-video-frames";
 				this.chatGPTViewEnvironment = await CoreWebView2Environment.CreateAsync(null, "UserData", options);

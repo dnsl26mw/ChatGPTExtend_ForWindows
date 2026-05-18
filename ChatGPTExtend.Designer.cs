@@ -154,7 +154,7 @@ namespace ChatGPTExtend
 			this.Controls.Add(this.chatGPTView);
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.KeyPreview = true;
-			this.MinimumSize = new System.Drawing.Size(500, 700);
+			this.MinimumSize = new System.Drawing.Size(376, 380);
 			this.Name = "ChatGPTExtend";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
 			this.Text = "ChatGPTExtend";
