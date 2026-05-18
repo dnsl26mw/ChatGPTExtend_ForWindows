@@ -79,9 +79,6 @@ namespace ChatGPTExtend
 		// 表示サイズを保持
 		private Size sizeKeep = new Size();
 
-		// DOM削除の要否を保持
-		private bool domDeleteKeep = false;
-
 		// 最大化で再表示フラグ
 		private bool maximizeReDispFlg = false;
 
@@ -417,15 +414,6 @@ namespace ChatGPTExtend
 		private void SetZoomFactor(double zoomFactor)
 		{
 			this.chatGPTView.ZoomFactor = zoomFactor;
-		}
-
-		/// <summary>
-		/// DOM削除の要否の保持および設定
-		/// </summary>
-		/// <param name="flg"></param>
-		private void SetDomDeleteKeep(bool flg)
-		{
-			this.domDeleteKeep = flg;
 		}
 
 		/// <summary>
