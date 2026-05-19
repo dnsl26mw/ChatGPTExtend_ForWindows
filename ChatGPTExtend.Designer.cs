@@ -33,7 +33,7 @@ namespace ChatGPTExtend
 		{
 			this.components = new System.ComponentModel.Container();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChatGPTExtend));
-			this.chatGPTView = new Microsoft.Web.WebView2.WinForms.WebView2();
+			this.webView = new Microsoft.Web.WebView2.WinForms.WebView2();
 			this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
 			this.contextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
 			this.dispToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -44,24 +44,24 @@ namespace ChatGPTExtend
 			this.reloadStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.line3 = new System.Windows.Forms.ToolStripSeparator();
 			this.closeStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			((System.ComponentModel.ISupportInitialize)(this.chatGPTView)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.webView)).BeginInit();
 			this.contextMenu.SuspendLayout();
 			this.SuspendLayout();
 			// 
-			// chatGPTView
+			// webView
 			// 
-			this.chatGPTView.AllowExternalDrop = true;
-			this.chatGPTView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+			this.webView.AllowExternalDrop = true;
+			this.webView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.chatGPTView.CreationProperties = null;
-			this.chatGPTView.DefaultBackgroundColor = System.Drawing.Color.White;
-			this.chatGPTView.Location = new System.Drawing.Point(0, 0);
-			this.chatGPTView.Margin = new System.Windows.Forms.Padding(0);
-			this.chatGPTView.Name = "chatGPTView";
-			this.chatGPTView.Size = new System.Drawing.Size(1264, 681);
-			this.chatGPTView.TabIndex = 0;
-			this.chatGPTView.ZoomFactor = 0.88D;
+			this.webView.CreationProperties = null;
+			this.webView.DefaultBackgroundColor = System.Drawing.Color.White;
+			this.webView.Location = new System.Drawing.Point(0, 0);
+			this.webView.Margin = new System.Windows.Forms.Padding(0);
+			this.webView.Name = "webView";
+			this.webView.Size = new System.Drawing.Size(1264, 681);
+			this.webView.TabIndex = 0;
+			this.webView.ZoomFactor = 0.88D;
 			// 
 			// notifyIcon
 			// 
@@ -151,7 +151,7 @@ namespace ChatGPTExtend
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1264, 681);
-			this.Controls.Add(this.chatGPTView);
+			this.Controls.Add(this.webView);
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.KeyPreview = true;
 			this.MinimumSize = new System.Drawing.Size(376, 380);
@@ -162,7 +162,7 @@ namespace ChatGPTExtend
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ChatGPTExtend_FormClosing);
 			this.SizeChanged += new System.EventHandler(this.ChatGPTExtend_SizeChanged);
 			this.Move += new System.EventHandler(this.ChatGPTExtend_Move);
-			((System.ComponentModel.ISupportInitialize)(this.chatGPTView)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.webView)).EndInit();
 			this.contextMenu.ResumeLayout(false);
 			this.ResumeLayout(false);
 
@@ -170,7 +170,7 @@ namespace ChatGPTExtend
 
 		#endregion
 
-		private Microsoft.Web.WebView2.WinForms.WebView2 chatGPTView;
+		private Microsoft.Web.WebView2.WinForms.WebView2 webView;
 		private NotifyIcon notifyIcon;
 		private ContextMenuStrip contextMenu;
 		private ToolStripMenuItem dispToolStripMenuItem;

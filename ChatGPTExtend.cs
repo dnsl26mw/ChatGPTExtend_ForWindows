@@ -83,7 +83,7 @@ namespace ChatGPTExtend
 		private bool maximizeReDispFlg = false;
 
 		// ユーザデータ
-		private CoreWebView2Environment chatGPTViewEnvironment;
+		private CoreWebView2Environment webViewEnvironment;
 
 		[DllImport("dwmapi.dll")]
 		// タイトルバーの色をダークモード/ライトモードに合わせて変更するためのWin32API
@@ -116,8 +116,8 @@ namespace ChatGPTExtend
 			// 右クリックメニューの描画設定の適用
 			this.SetContextMenuDrawing();
 
-			// ChatGPTView初期化
-			this.ChatGPTViewInitialize();
+			// WebView初期化
+			this.WebViewInitialize();
 
 			// 起動時にダークモード/ライトモードに合わせて色を変更
 			this.SetColorMode();
@@ -272,7 +272,7 @@ namespace ChatGPTExtend
 					[this.isMaximizedKey] = this.WindowState == FormWindowState.Maximized,
 
 					// ズーム倍率
-					[this.zoomFactorKey] = this.chatGPTView.ZoomFactor
+					[this.zoomFactorKey] = this.webView.ZoomFactor
 				};
 
 				// JSON文字列に変換
@@ -413,16 +413,16 @@ namespace ChatGPTExtend
 		/// <param name="url"></param>
 		private void SetZoomFactor(double zoomFactor)
 		{
-			this.chatGPTView.ZoomFactor = zoomFactor;
+			this.webView.ZoomFactor = zoomFactor;
 		}
 
 		/// <summary>
-		/// ChatGPTView初期化
+		/// WebView初期化
 		/// </summary>
-		private async void ChatGPTViewInitialize()
+		private async void WebViewInitialize()
 		{
 			// ユーザデータ保持
-			if (this.chatGPTViewEnvironment == null)
+			if (this.webViewEnvironment == null)
 			{
 				var options = new CoreWebView2EnvironmentOptions();
 				options.AdditionalBrowserArguments =
@@ -435,18 +435,18 @@ namespace ChatGPTExtend
 					"--disable-features=CalculateNativeWinOcclusion" +
 					"--enable-zero-copy " +
 					"--enable-gpu-memory-buffer-video-frames";
-				this.chatGPTViewEnvironment = await CoreWebView2Environment.CreateAsync(null, "UserData", options);
+				this.webViewEnvironment = await CoreWebView2Environment.CreateAsync(null, "UserData", options);
 			}
 
-			// chatGPTView.CoreWebview2の初期化
-			await this.chatGPTView.EnsureCoreWebView2Async(chatGPTViewEnvironment);
+			// webView.CoreWebview2の初期化
+			await this.webView.EnsureCoreWebView2Async(webViewEnvironment);
 
 			// WebMessageReceivedイベントの追加
-			this.chatGPTView.CoreWebView2.WebMessageReceived -= ChatGPTView_WebMessageReceived;
-			this.chatGPTView.CoreWebView2.WebMessageReceived += ChatGPTView_WebMessageReceived;
+			this.webView.CoreWebView2.WebMessageReceived -= WebView_WebMessageReceived;
+			this.webView.CoreWebView2.WebMessageReceived += WebView_WebMessageReceived;
 
-			// Enter押下による改行有効化設定の変更を監視するJavaScriptコードをchatGPTViewに追加
-			await chatGPTView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
+			// Enter押下による改行有効化設定の変更を監視するJavaScriptコードをwebViewに追加
+			await webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
 				
 				window.__enterLineBreakEnabled = false;
 
@@ -463,66 +463,66 @@ namespace ChatGPTExtend
 			");
 
 			// 開発者ツール無効化
-			this.chatGPTView.CoreWebView2.Settings.AreDevToolsEnabled = false;
+			this.webView.CoreWebView2.Settings.AreDevToolsEnabled = false;
 
 			// ステータスバー表示無効化
-			this.chatGPTView.CoreWebView2.Settings.IsStatusBarEnabled = false;
+			this.webView.CoreWebView2.Settings.IsStatusBarEnabled = false;
 
 			// デフォルトの右クリックメニュー無効化
-			this.chatGPTView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+			this.webView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
 
 			// デフォルトのスクリプトダイアログ無効化
-			this.chatGPTView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = false;
+			this.webView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = false;
 
 			// 共有チャット以外のチャット内リンクをクリックした場合の処理
-			this.chatGPTView.CoreWebView2.NewWindowRequested -= this.ChatGPTView_NewWindowRequested;
-			this.chatGPTView.CoreWebView2.NewWindowRequested += this.ChatGPTView_NewWindowRequested;
+			this.webView.CoreWebView2.NewWindowRequested -= this.WebView_NewWindowRequested;
+			this.webView.CoreWebView2.NewWindowRequested += this.WebView_NewWindowRequested;
 
 			// チャットルーム移動時の処理
-			this.chatGPTView.CoreWebView2.HistoryChanged -= this.ChatGPTView_HistoryChanged;
-			this.chatGPTView.CoreWebView2.HistoryChanged += this.ChatGPTView_HistoryChanged;
+			this.webView.CoreWebView2.HistoryChanged -= this.WebView_HistoryChanged;
+			this.webView.CoreWebView2.HistoryChanged += this.WebView_HistoryChanged;
 
 			// ダウンロード開始の処理
-			this.chatGPTView.CoreWebView2.DownloadStarting -= this.ChaatGPTView_DownloadStarting;
-			this.chatGPTView.CoreWebView2.DownloadStarting += this.ChaatGPTView_DownloadStarting;
+			this.webView.CoreWebView2.DownloadStarting -= this.ChaatGPTView_DownloadStarting;
+			this.webView.CoreWebView2.DownloadStarting += this.ChaatGPTView_DownloadStarting;
 
 			// ズーム倍率変更時の処理
-			this.chatGPTView.ZoomFactorChanged -= this.ChatGPTView_ZoomFactorChanged;
-			this.chatGPTView.ZoomFactorChanged += this.ChatGPTView_ZoomFactorChanged;
+			this.webView.ZoomFactorChanged -= this.WebView_ZoomFactorChanged;
+			this.webView.ZoomFactorChanged += this.WebView_ZoomFactorChanged;
 
 			// ナビゲーション完了時の処理
-			this.chatGPTView.NavigationCompleted -= this.ChatGPTView_NavigationCompleted;
-			this.chatGPTView.NavigationCompleted += this.ChatGPTView_NavigationCompleted;
+			this.webView.NavigationCompleted -= this.WebView_NavigationCompleted;
+			this.webView.NavigationCompleted += this.WebView_NavigationCompleted;
 
 			// 前回のチャットルームを再開する場合
 			if (this.isChatRoomLeftOffKeep)
 			{
 				// 保持している前回のチャットルームのURLの読み込み
-				this.chatGPTView.CoreWebView2.Navigate(this.lastTimeChatRoomUrl);
+				this.webView.CoreWebView2.Navigate(this.lastTimeChatRoomUrl);
 
 				return;
 			}
 
 			// ChatGPTのトップページの読み込み
-			this.chatGPTView.CoreWebView2.Navigate(CHATGPT_URL);
+			this.webView.CoreWebView2.Navigate(CHATGPT_URL);
 		}
 
 		/// <summary>
-		/// Enter押下による改行有効化のためのJavaScriptコードをchatGPTViewに追加
+		/// Enter押下による改行有効化のためのJavaScriptコードをwebViewに追加
 		/// </summary>
 		private async void SetEnterLineBreakJs()
 		{
 			// Enter押下による改行を有効化する場合
 			if (this.isEnterLineBreakKeep)
 			{
-				await this.chatGPTView.CoreWebView2.ExecuteScriptAsync(
+				await this.webView.CoreWebView2.ExecuteScriptAsync(
 					"window.__enterLineBreakEnabled = true;"
 				);
 			}
 			// Enter押下による改行を有効化しない場合
 			else
 			{
-				await this.chatGPTView.CoreWebView2.ExecuteScriptAsync(
+				await this.webView.CoreWebView2.ExecuteScriptAsync(
 					"window.__enterLineBreakEnabled = false;"
 				);
 			}
@@ -650,8 +650,8 @@ namespace ChatGPTExtend
 				// フォームの背景色をダークモードに合わせる
 				this.BackColor = Color.FromArgb(32, 32, 32);
 
-				// chatGPTViewの背景色をダークモードに合わせる
-				this.chatGPTView.DefaultBackgroundColor = Color.FromArgb(32, 32, 32);
+				// webViewの背景色をダークモードに合わせる
+				this.webView.DefaultBackgroundColor = Color.FromArgb(32, 32, 32);
 			}
 			// ダークモードではない場合
 			else
@@ -659,8 +659,8 @@ namespace ChatGPTExtend
 				// フォームの背景色をライトモードに合わせる
 				this.BackColor = Color.FromArgb(255, 255, 255);
 
-				// chatGPTViewの背景色をライトモードに合わせる
-				this.chatGPTView.DefaultBackgroundColor = Color.FromArgb(255, 255, 255);
+				// webViewの背景色をライトモードに合わせる
+				this.webView.DefaultBackgroundColor = Color.FromArgb(255, 255, 255);
 			}
 
 			// タイトルバーの色をダークモード/ライトモードに合わせる
@@ -732,10 +732,10 @@ namespace ChatGPTExtend
 		#region イベント
 
 		/// <summary>
-		/// ChatGPTView_WebMessageReceivedイベント
+		/// WebView_WebMessageReceivedイベント
 		/// </summary>
 		/// <returns></returns>
-		private void ChatGPTView_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+		private void WebView_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
 		{
 			// キー押下メッセージを取得
 			string msg = string.Empty;
@@ -819,11 +819,11 @@ namespace ChatGPTExtend
 		}
 
 		/// <summary>
-		/// ChatGPTView_NewWindowRequestedイベント
+		/// WebView_NewWindowRequestedイベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="args"></param>
-		private void ChatGPTView_NewWindowRequested(object sender, Microsoft.Web.WebView2.Core.CoreWebView2NewWindowRequestedEventArgs args)
+		private void WebView_NewWindowRequested(object sender, Microsoft.Web.WebView2.Core.CoreWebView2NewWindowRequestedEventArgs args)
 		{
 			// クリックしたリンクのURL
 			string uri = args.Uri;
@@ -832,7 +832,7 @@ namespace ChatGPTExtend
 			if (uri.StartsWith(CHATGPT_SHARED_CHAT_URL_HEAD))
 			{
 				args.Handled = true;
-				this.chatGPTView.CoreWebView2.Navigate(uri);
+				this.webView.CoreWebView2.Navigate(uri);
 			}
 			else
 			{
@@ -847,25 +847,25 @@ namespace ChatGPTExtend
 		}
 
 		/// <summary>
-		/// ChatGPTView_HistoryChangedイベント
+		/// WebView_HistoryChangedイベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
-		private void ChatGPTView_HistoryChanged(object sender, object e)
+		private void WebView_HistoryChanged(object sender, object e)
 		{
 			// 現在のURLを取得
-			string currentUrl = this.chatGPTView.CoreWebView2.Source;
+			string currentUrl = this.webView.CoreWebView2.Source;
 
 			// URL保持の共通処理
 			this.SetLastTimeChatRoomUrl(currentUrl);
 		}
 
 		/// <summary>
-		/// ChatGPTView_NavigationCompletedイベント
+		/// WebView_NavigationCompletedイベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
-		private void ChatGPTView_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
+		private void WebView_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
 		{
 			// Enter押下による改行の有効化設定の切り替え
 			this.SetEnterLineBreakJs();
@@ -900,8 +900,8 @@ namespace ChatGPTExtend
 					e.ResultFilePath = saveFileDialog.FileName;
 
 					// ダウンロード状態の変更イベントを追加
-					e.DownloadOperation.StateChanged -= this.ChatGPTView_DownloadStateChanged;
-					e.DownloadOperation.StateChanged += this.ChatGPTView_DownloadStateChanged;
+					e.DownloadOperation.StateChanged -= this.WebView_DownloadStateChanged;
+					e.DownloadOperation.StateChanged += this.WebView_DownloadStateChanged;
 				}
 				else
 				{
@@ -912,11 +912,11 @@ namespace ChatGPTExtend
 		}
 
 		/// <summary>
-		/// ChatGPTView_DownloadStateChangedイベント
+		/// WebView_DownloadStateChangedイベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
-		private void ChatGPTView_DownloadStateChanged(object sender, object e)
+		private void WebView_DownloadStateChanged(object sender, object e)
 		{
 			// ダウンロード操作状態を取得
 			var download = sender as CoreWebView2DownloadOperation;
@@ -939,19 +939,19 @@ namespace ChatGPTExtend
 				}
 
 				// ダウンロード状態の変更イベントを削除
-				download.StateChanged -= this.ChatGPTView_DownloadStateChanged;
+				download.StateChanged -= this.WebView_DownloadStateChanged;
 			}
 		}
 
 		/// <summary>
-		/// ChatGPTView_ZoomFactorChangedイベント
+		/// WebView_ZoomFactorChangedイベント
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
-		private void ChatGPTView_ZoomFactorChanged(object sender, EventArgs e)
+		private void WebView_ZoomFactorChanged(object sender, EventArgs e)
 		{
 			// ズーム倍率の設定
-			this.SetZoomFactor(this.chatGPTView.ZoomFactor);
+			this.SetZoomFactor(this.webView.ZoomFactor);
 		}
 
 		/// <summary>
@@ -1017,7 +1017,7 @@ namespace ChatGPTExtend
 			if (this.isChatRoomLeftOffKeep)
 			{
 				// 現在のURLを取得
-				currentUrl = this.chatGPTView.CoreWebView2.Source;
+				currentUrl = this.webView.CoreWebView2.Source;
 			}
 
 			// URL保持の共通処理
@@ -1038,7 +1038,7 @@ namespace ChatGPTExtend
 		private void ContextReloadMenu_Click(object sender, EventArgs e)
 		{
 			// 再読み込み
-			this.chatGPTView.CoreWebView2.Reload();
+			this.webView.CoreWebView2.Reload();
 
 			// アクティブ化
 			this.Activate();
